@@ -1,0 +1,17 @@
+{
+  "rgb_topic": "/camera/color/image_raw",
+  "pointcloud_topic": "/camera/depth/points",
+  "output_topic": "/yolo_vision/object_cloud",
+  "target_class": "bowl",
+  "confidence": 0.15,
+  "imgsz": 512,
+  "device": "intel:cpu",
+  "model_path": "yolo26n-seg_openvino_model",
+  "sync_queue_size": 30,
+  "sync_slop": 0.05,
+  "input_timeout": 30.0,
+  "min_points": 30,
+  "expected_width": 1280,
+  "expected_height": 800,
+  "publish_debug": true
+}

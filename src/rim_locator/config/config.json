@@ -1,0 +1,14 @@
+{
+  "input_topic": "/yolo_vision/object_cloud",
+  "output_topic": "/rim_locator/rim_point",
+  "target_frame": "base_link",
+  "top_percentile": 98.0,
+  "rim_height_band": 0.015,
+  "near_side_ratio": 0.1,
+  "min_points": 30,
+  "min_rim_points": 10,
+  "min_local_points": 3,
+  "tf_timeout": 5.0,
+  "input_timeout": 60.0,
+  "publish_debug": true
+}
