@@ -6,6 +6,7 @@ Only move_group, robot_state_publisher and synthetic joint feedback are started.
 Logs stay in /tmp/moveit-grasp-test-* for diagnosis.
 """
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -31,15 +32,17 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Pose as RosPose
-from moveit_msgs.msg import DisplayTrajectory, RobotState, CollisionObject, PlanningScene
-from moveit_msgs.srv import GetStateValidity, ApplyPlanningScene
+from moveit_msgs.msg import (DisplayTrajectory, RobotState, CollisionObject, PlanningScene,
+                            AttachedCollisionObject, AllowedCollisionEntry)
+from moveit_msgs.srv import GetStateValidity, ApplyPlanningScene, GetPlanningScene
 from shape_msgs.msg import SolidPrimitive
 from ament_index_python.packages import get_package_share_directory as share
 import xacro
 import yaml
 
-from grasp_executor.config import GraspConfig
-from grasp_executor.grasp import Pose, execute_grasp
+from grasp_executor.config import load_config
+from grasp_executor.grasp import Pose, build_place_drop_pose, execute_grasp, execute_grasp_place, run_batch_task
+from grasp_executor.scene_cleanup import scene_request, has_legacy_objects
 from grasp_executor.moveit_ros import MoveItArm, JOINTS
 
 
@@ -90,8 +93,10 @@ def main():
         timer = node.create_timer(.02, publish)
         displays = []
         sub = node.create_subscription(DisplayTrajectory, '/display_planned_path', displays.append,
-            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
-        arm = MoveItArm(node, GraspConfig(), Event())
+            QoSProfile(depth=10))
+        root = Path(__file__).resolve().parents[1]
+        config = load_config(root / "src/grasp_executor/config/config.json")
+        arm = MoveItArm(node, config, Event())
         thread = Thread(target=executor.spin, daemon=True)
         thread.start()
         deadline = time.monotonic()+40
@@ -117,13 +122,71 @@ def main():
         assert arm.check_ready(15.)
         actual = arm.read_pose()
         print('Actual grasp_center:', actual, flush=True)
+        # Seed the old, blocking objects as if MoveIt remained open across an
+        # upgrade. Production cleanup must remove them without reading a model.
+        def seed_legacy_scene():
+            scene = PlanningScene(is_diff=True)
+            scene.robot_state.is_diff = True
+            obj = CollisionObject(id='grasp_table', operation=CollisionObject.ADD)
+            obj.header.frame_id = arm.config.base_frame
+            box = RosPose()
+            box.position.x, box.position.y, box.position.z = actual.position
+            box.orientation.w = 1.
+            obj.primitives = [SolidPrimitive(type=SolidPrimitive.BOX, dimensions=[.3,.3,.3])]
+            obj.primitive_poses = [box]
+            scene.world.collision_objects = [obj]
+            attached = AttachedCollisionObject(link_name='gripper_base_link',
+                                               touch_links=['gripper_base_link', 'tool0', 'flange', 'wrist_3_link'])
+            from copy import deepcopy
+            attached.object = deepcopy(obj)
+            attached.object.id = 'grasp_gripper_envelope'
+            attached.object.header.frame_id = 'gripper_base_link'
+            attached.object.primitive_poses[0].position.x = 0.
+            attached.object.primitive_poses[0].position.y = 0.
+            attached.object.primitive_poses[0].position.z = .1
+            scene.robot_state.attached_collision_objects = [attached]
+            current = arm._call(GetPlanningScene, '/get_planning_scene', scene_request(), time.monotonic()+5.).scene
+            acm = deepcopy(current.allowed_collision_matrix)
+            original_acm = deepcopy(acm)
+            for name in ('grasp_table', 'grasp_gripper_envelope'):
+                for row in acm.entry_values:
+                    row.enabled.append(False)
+                acm.entry_names.append(name)
+                acm.entry_values.append(AllowedCollisionEntry(enabled=[False]*len(acm.entry_names)))
+            scene.allowed_collision_matrix = acm
+            assert arm._call(ApplyPlanningScene, '/apply_planning_scene',
+                             ApplyPlanningScene.Request(scene=scene), time.monotonic()+5.).success
+            return original_acm
+
+        original_acm = seed_legacy_scene()
+        # Exercise the same cleanup command called by run_robot_prepare.sh.
+        subprocess.run(['/usr/bin/python3', str(root / 'tools/clear_legacy_grasp_scene.py')],
+                       check=True, timeout=40)
+        cleaned = arm._call(GetPlanningScene, '/get_planning_scene', scene_request(), time.monotonic()+5.).scene
+        assert not has_legacy_objects(cleaned)
+        assert cleaned.allowed_collision_matrix == original_acm
+        print('PASS startup cleanup removed legacy table/envelope and preserved SRDF matrix', flush=True)
+        seed_legacy_scene()  # Backend must also clean an already-running scene.
         approach = replace(actual, position=(actual.position[0]+.015, actual.position[1], actual.position[2]+.035))
         grasp = replace(approach, position=(*approach.position[:2], approach.position[2]-.03))
         assert arm.prepare_plans(approach, grasp)
+        cleaned = arm._call(GetPlanningScene, '/get_planning_scene', scene_request(), time.monotonic()+5.).scene
+        assert not has_legacy_objects(cleaned) and not arm.world_objects
+        assert cleaned.allowed_collision_matrix == original_acm
+        print('PASS backend removes residual objects; plans with no added collision model', flush=True)
         time.sleep(.2)
         assert len(arm.plans) == 3 and len(displays[-1].trajectory) == 3
         assert arm.commanded is False
         print('PASS real OMPL approach + Cartesian descent/lift + RViz display (no execution)', flush=True)
+        grasp_plans = arm.plans
+        arm.config = load_config(root / "src/grasp_executor/config/place_config.json")
+        place_ready = arm.resolve_place_pose()
+        place_drop = build_place_drop_pose(place_ready, arm.config)
+        assert arm.prepare_plans(approach, grasp, place_ready, place_drop, place_ready)
+        assert len(arm.plans) == 6 and len(displays[-1].trajectory) == 6
+        print('PASS fixed place reference + 20 cm drop/retreat six-segment planning', flush=True)
+        place_plans = arm.plans
+        arm.plans, arm.next_segment = grasp_plans, 0
         # A fake FollowJointTrajectory server verifies the REAL MoveIt execution
         # mapping without starting ros2_control or connecting a hardware driver.
         from control_msgs.action import FollowJointTrajectory
@@ -176,6 +239,76 @@ def main():
         assert result.status == 'success', result
         assert len(fake_goals) == 3 and fake_gripper.commands == ['Open','Close']
         print('PASS real ExecuteTrajectory -> simulated scaled-controller Action; 3 segments and Open/Close', flush=True)
+        positions[:] = initial_positions
+        time.sleep(.4)
+        arm.plans, arm.next_segment = place_plans, 0
+        result = execute_grasp_place(approach, grasp, place_ready, place_drop,
+                                     HardwareInterfaces(arm, fake_gripper), arm.config)
+        assert result.status == 'success', result
+        assert len(fake_goals) == 9 and fake_gripper.commands == ['Open', 'Close', 'Open', 'Close', 'Open']
+        print('PASS simulated six-segment grasp/place execution, release and retreat', flush=True)
+        # End-to-end three-object batch: second preview starts at the previous
+        # retreat, and execution replans from freshly simulated feedback.
+        from copy import deepcopy
+        import numpy as np
+        from rim_locator.config import load_config as load_rim_config
+        from rim_locator.rim_detection import locate_grasp_pose
+        positions[:] = initial_positions
+        time.sleep(.4)
+        batch_offset = dict(x=.001, y=0., z=.002)
+        preview_arm.config = replace(preview_arm.config, execution_journal=str(directory/'journal'),
+                                     grasp_offset=batch_offset)
+        rim_config = load_rim_config(root/'src/rim_locator/config/place_config.json')
+        batch = []
+        for cx, cy, tilt in ((.74, .18, 20.), (.70, .10, 0.), (.72, .14, 20.)):
+            theta, depth = np.meshgrid(np.linspace(0.,2*np.pi,240,endpoint=False),
+                                       np.linspace(0.,.05,40))
+            radius = .085-depth*math.tan(math.radians(tilt))
+            cloud = np.c_[(cx+radius*np.cos(theta)).ravel(), (cy+radius*np.sin(theta)).ravel(),
+                           (.15-depth).ravel()]
+            located = locate_grasp_pose(cloud, rim_config)
+            batch.append(Pose(tuple(located.point), located.orientation, 'base_link', 'grasp_center'))
+            print('Synthetic bowl wall tilt:',tilt,'grasp:',batch[-1],flush=True)
+        batch.sort(key=lambda p:math.hypot(*p.position[:2]))
+        arm.close()  # Release the execution lock before preview reserves it.
+        captured, batch_previews = [], []
+        original_prepare = preview_arm.prepare_plans
+        def capture(*args):
+            ok = original_prepare(*args)
+            captured.append(deepcopy(preview_arm.plans))
+            return ok
+        preview_arm.prepare_plans = capture
+        stamp = node.get_clock().now().nanoseconds
+        result = run_batch_task(batch, stamp, lambda:node.get_clock().now().nanoseconds,
+                                HardwareInterfaces(preview_arm, fake_gripper), preview_arm.config,
+                                on_poses=lambda *poses: batch_previews.append(poses))
+        assert result.status == 'planned', result
+        assert len(captured) == len(batch_previews) == 3
+        for raw, (ap, gp, ready, drop) in zip(batch, batch_previews):
+            np.testing.assert_allclose(gp.position, np.array(raw.position) + [.001, 0., .002], atol=1e-12)
+            assert gp.orientation == raw.orientation
+            np.testing.assert_allclose(ap.position, np.array(gp.position) +
+                                       [0., 0., preview_arm.config.approach_height], atol=1e-12)
+            assert ready == place_ready and drop == place_drop
+        assert all(len(plans) == 6 for plans in captured)
+        last = captured[0][-1].trajectory.joint_trajectory.points[-1].positions
+        next_start = captured[1][0].start.joint_state
+        assert list(last) == [next_start.position[next_start.name.index(j)] for j in JOINTS]
+        print('PASS three-object preview applies base-frame offset once and chains second start to first retreat', flush=True)
+        preview_arm.close()
+        arm.config = replace(arm.config, execution_journal=str(directory/'journal'),
+                             grasp_offset=batch_offset)
+        goals_before = len(fake_goals)
+        commands_before = len(fake_gripper.commands)
+        execution_previews = []
+        result = run_batch_task(batch, stamp, lambda:node.get_clock().now().nanoseconds,
+                                HardwareInterfaces(arm, fake_gripper), arm.config,
+                                on_poses=lambda *poses: execution_previews.append(poses))
+        assert result.status == 'success' and result.completed_count == 3, result
+        assert execution_previews == batch_previews
+        assert len(fake_goals)-goals_before == 18
+        assert fake_gripper.commands[commands_before:] == ['Open','Close','Open']*3
+        print('PASS three-object simulated execution: 18 segments, three releases/returns', flush=True)
         # Reset synthetic feedback and use preview mode again for rejection tests.
         arm.close()
         arm = preview_arm
@@ -189,7 +322,10 @@ def main():
         print('PASS real grasp_center -> tool0 transform, FK/TF agreement', flush=True)
         unreachable = replace(approach, position=(1.4,1.4,1.4))
         try:
-            arm._pose_plan(arm._state(stationary=True), unreachable, time.monotonic()+15.)
+            # Production configuration allows 15 s of IK search; the client
+            # deadline must also include service/transport overhead.
+            arm._pose_plan(arm._state(stationary=True), unreachable,
+                           time.monotonic() + arm.config.allowed_planning_time + 5.)
         except RuntimeError as exc:
             assert 'planning_failed' in str(exc) or 'ik_failed' in str(exc), str(exc)
             print('PASS unreachable target rejected:', exc, flush=True)
@@ -215,8 +351,10 @@ def main():
             print('PASS real collision rejection:', exc, flush=True)
         else: raise AssertionError('Colliding start unexpectedly accepted')
         assert not arm.commanded
-        (directory/'result.json').write_text(json.dumps({'passed':5,'hardware_connected':False,'domain':os.environ['ROS_DOMAIN_ID']}))
-        print('5 MoveIt integration checks passed; hardware was not connected.', flush=True)
+        (directory/'result.json').write_text(json.dumps({'passed':11,'hardware_connected':False,
+            'domain':os.environ['ROS_DOMAIN_ID'], 'batch_grasp_offset':batch_offset,
+            'offset_preview_matches_execution':True, 'object_count':3, 'executed_segments':18}))
+        print('11 MoveIt integration checks passed; hardware was not connected.', flush=True)
     finally:
         if arm: arm.close()
         executor.shutdown(timeout_sec=2)

@@ -46,6 +46,18 @@ class CameraTests(unittest.TestCase):
         rows = self.rows(9_800_000_000, 9_900_000_000)
         self.assertFalse(camera_pair_ready(rows, [(r[0], 640, 400, r[3]) for r in rows], 10_000_000_000))
 
+    def test_two_rgb_and_depth_samples_need_two_actual_pairs(self):
+        self.assertFalse(camera_pair_ready(self.rows(9_800_000_000,9_900_000_000),
+                                          self.rows(8_000_000_000,9_810_000_000),10_000_000_000))
+
+    def test_mismatched_optical_frames_rejected(self):
+        rows=self.rows(9_800_000_000,9_900_000_000)
+        self.assertFalse(camera_pair_ready(rows,[(s,w,h,'depth_frame') for s,w,h,f in rows],10_000_000_000))
+
+    def test_recent_receipt_does_not_make_old_source_fresh(self):
+        rows=[(*r,30_000_000_000) for r in self.rows(9_800_000_000,9_900_000_000)]
+        self.assertFalse(camera_pair_ready(rows,rows,30_000_000_000))
+
 
 class SelectionTests(unittest.TestCase):
     def test_inactive_activation(self):

@@ -9,7 +9,8 @@
 
 ## 接口与动作
 
-- 输入仍是 `/rim_locator/rim_point`，`PointStamped`，`base_link` 坐标系。
+- 旧三段抓取输入为 `/rim_locator/rim_point`（`PointStamped`）；完整 place 流程输入为
+  `/rim_locator/grasp_poses`（`PoseArray`）。两者均使用 `base_link` 坐标系。
 - 抓取坐标是 `grasp_center`，规划组 `ur_manipulator` 的末端是 `tool0`。
 - 读取当前关节状态和真实 TF，以当前关节状态为种子调用 `/compute_ik`，选定接近点关节解。
 - `/plan_kinematic_path` 用现有 OMPL 规划到接近点；`/compute_cartesian_path` 规划竖直下降、抬升。
@@ -28,6 +29,12 @@ T_base_tool0 = T_base_grasp_center × inverse(T_tool0_grasp_center)
 
 启动时检查工具链是固定关节链，并核对 MoveIt FK 与实时 TF。
 `grasp_offset` 是视觉点到期望夹持中心的修正，不能重复填写工具长度补偿。
+其三个分量单位为米，沿 `base_frame` 的 X/Y/Z 轴相加，默认仍为零。
+PoseArray 中的位置是未补偿的定位锚点；批次入口统一加一次偏移，保持输入姿态，
+以补偿后抓取点生成沿基座 Z 的接近位姿、预览和规划，并检查工作空间。
+固定放置 ready/drop 不受抓取偏移影响；旧 PointStamped 路径也仅加一次。
+批次按补偿后 XY 距离排序，但执行认领摘要继续使用按原始距离排序的原始观测，
+修改偏移不会让同一已认领批次重新执行。冻结批次和现有时间戳检查时机保持不变。
 
 ## 参数
 
@@ -49,7 +56,7 @@ T_base_tool0 = T_base_grasp_center × inverse(T_tool0_grasp_center)
 | `cartesian_step`、`max_joint_step` | 5 mm 插值步长，0.25 rad 相邻轨迹点跳变阈值 |
 | `planning_timeout`、`motion_timeout` | 每段规划及检查 60 秒；每段执行 90 秒 |
 | `position_tolerance`、`orientation_tolerance` | 到位 2 mm、0.02 rad；静止保持 0.25 秒 |
-| `table_enabled` | false；不自动加入未经标定的桌面 |
+| 环境模型 | 不加载桌面或额外夹爪保护盒；启动及规划前清理旧对象 |
 | `require_collision_world_for_execution` | false；无世界障碍模型也允许通过此项检查 |
 | `gripper_settle_time` | Open/Close 命令退出后等待 1 秒 |
 
@@ -75,9 +82,8 @@ Ctrl+C、执行错误和超时会取消 Action；未确认取消时尝试停用�
 
 ## 目前未验证的现场事项
 
-没有实测桌面，不添加桌面碰撞模型；保留自碰撞和已有障碍物检查。
-模型不能拒绝与未建模桌面发生的碰撞。启用 `table_enabled` 前必须填写实测
-`table_center` 和 `table_size`，当前数值只是禁用状态下的示例。
+2026-09-23 起移除桌面模型与额外夹爪保护盒加载。不再依赖点云建模文件或其时间戳。
+准备脚本和抓取规划会清理旧对象并回读确认；机器人 URDF/SRDF 自碰撞检查保持开启，未建模的桌面不会参与碰撞检测。
 
 相机外参、`grasp_center` 的物理 TCP、固定抓取姿态和夹持偏移仍需现场核实。
 假定对象、相机和底盘相对位置不变；延长到 10 分钟不会重新测量目标。

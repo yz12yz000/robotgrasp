@@ -58,6 +58,9 @@ class GraspConfig:
     planner_id: str = "RRTConnectkConfigDefault"
     planning_timeout: float = 60.0
     allowed_planning_time: float = 5.0
+    ik_attempts: int = 8
+    ik_timeout: float = 0.25
+    max_ik_plans: int = 3
     velocity_scaling: float = 0.1
     acceleration_scaling: float = 0.1
     cartesian_step: float = 0.005
@@ -70,24 +73,42 @@ class GraspConfig:
     max_joint_acceleration: float = 0.3
     start_joint_tolerance: float = 0.01
     gripper_settle_time: float = 1.0
-    table_enabled: bool = False
-    table_id: str = "grasp_table"
-    table_center: dict = field(default_factory=lambda: dict(x=0.6, y=0.0, z=-0.15))
-    table_size: dict = field(default_factory=lambda: dict(x=0.8, y=0.8, z=0.05))
-    require_collision_world_for_execution: bool = False
+    input_mode: str = "point"
+    place_ready_position: dict = field(default_factory=lambda: dict(x=0.388824983, y=0.389889715, z=0.258283462))
+    place_ready_orientation: dict = field(default_factory=lambda: dict(x=-0.001843561, y=0.999969986,
+                                                                        z=-0.002705731, w=-0.007021887))
+    place_reference_frame: str = "base"
+    place_reference_child_frame: str = "tool0"
+    place_reference_position: dict = field(default_factory=lambda: dict(x=-0.424166034, y=-0.389831215, z=0.424239498))
+    place_reference_orientation: dict = field(default_factory=lambda: dict(x=0.999969947, y=0.001839867,
+                                                                            z=0.007021497, w=-0.002723666))
+    place_drop_distance: float = 0.20
+    place_dwell_time: float = 1.0
+    place_retreat: bool = True
 
     def __post_init__(self):
+        for name in ('ik_attempts', 'max_ik_plans'):
+            if type(getattr(self, name)) is not int or not 1 <= getattr(self, name) <= 16:
+                raise ValueError('invalid_config:' + name)
+        if isinstance(self.ik_timeout, bool) or not isinstance(self.ik_timeout, (float, int)) or not math.isfinite(self.ik_timeout) or not 0 < self.ik_timeout <= 5:
+            raise ValueError('invalid_config:ik_timeout')
         for name in ("input_topic", "base_frame", "tool_frame", "hand_control_setup", "execution_journal",
                      "controller_name", "controller_manager", "controller_tip_frame", "move_group",
-                     "planning_link", "move_group_node", "planner_id", "table_id"):
+                     "planning_link", "move_group_node", "planner_id"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"invalid_config:{name}")
         if any(getattr(self, name).startswith("/") for name in ("base_frame", "tool_frame", "controller_tip_frame")):
             raise ValueError("frame_id_must_not_start_with_slash")
+        if self.input_mode not in ("point", "pose_array"):
+            raise ValueError("invalid_input_mode")
+        for name in ("place_reference_frame", "place_reference_child_frame"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip() or value.startswith('/'):
+                raise ValueError(f"invalid_config:{name}")
         if not isinstance(self.controller_namespace, str) or "/" in self.controller_name:
             raise ValueError("invalid_controller_namespace_or_name")
-        for name in ("publish_debug", "plan_only", "table_enabled", "require_collision_world_for_execution"):
+        for name in ("publish_debug", "plan_only", "place_retreat"):
             if type(getattr(self, name)) is not bool:
                 raise ValueError(f"invalid_config:{name}")
         for name in ("approach_height", "motion_timeout", "gripper_timeout", "stop_timeout",
@@ -97,7 +118,8 @@ class GraspConfig:
                      "linear_lateral_tolerance", "planning_timeout", "allowed_planning_time",
                      "velocity_scaling", "acceleration_scaling", "cartesian_step", "jump_threshold",
                      "max_joint_step", "validation_joint_step", "validation_time_step", "max_joint_velocity",
-                     "max_joint_acceleration", "start_joint_tolerance", "gripper_settle_time"):
+                     "max_joint_acceleration", "start_joint_tolerance", "gripper_settle_time",
+                     "place_drop_distance", "place_dwell_time"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
                 raise ValueError(f"invalid_config:{name}")
@@ -110,6 +132,16 @@ class GraspConfig:
         norm = math.hypot(*orientation)
         if not math.isfinite(norm) or norm < 1e-12 or abs(norm - 1.0) > 0.01:
             raise ValueError("orientation_must_be_unit_quaternion")
+        vector(self.place_ready_position, "xyz", "place_ready_position")
+        place_orientation = vector(self.place_ready_orientation, "xyzw", "place_ready_orientation")
+        place_norm = math.hypot(*place_orientation)
+        if not math.isfinite(place_norm) or place_norm < 1e-12 or abs(place_norm - 1.0) > 0.01:
+            raise ValueError("place_orientation_must_be_unit_quaternion")
+        vector(self.place_reference_position, "xyz", "place_reference_position")
+        reference_orientation = vector(self.place_reference_orientation, "xyzw", "place_reference_orientation")
+        reference_norm = math.hypot(*reference_orientation)
+        if not math.isfinite(reference_norm) or reference_norm < 1e-12 or abs(reference_norm - 1.0) > 0.01:
+            raise ValueError("place_reference_orientation_must_be_unit_quaternion")
         low = vector(self.workspace_min, "xyz", "workspace_min")
         high = vector(self.workspace_max, "xyz", "workspace_max")
         if low[0] >= high[0] or low[1] >= high[1] or low[2] >= high[2]:
@@ -122,9 +154,6 @@ class GraspConfig:
             raise ValueError("invalid_max_validation_samples")
         if self.gripper_settle_time >= self.gripper_timeout:
             raise ValueError("gripper_timeout_must_exceed_settle_time")
-        vector(self.table_center, "xyz", "table_center")
-        if any(v <= 0 for v in vector(self.table_size, "xyz", "table_size")):
-            raise ValueError("invalid_table_size")
         if self.command_rate > 200:
             raise ValueError("command_rate_must_not_exceed_200_hz")
         if self.max_tracking_error <= self.position_tolerance or self.max_tracking_angle <= self.orientation_tolerance:

@@ -34,13 +34,19 @@ BUSY_GOAL_STATES = {1, 2, 3}  # accepted, executing, canceling
 
 
 def camera_pair_ready(images, clouds, now_ns):
-    """Require two fresh, advancing, aligned RGB/cloud pairs, not just topics."""
+    """Require two fresh, advancing, aligned RGB/cloud pairs, not just topics.
+
+    Callers may append the receipt time; both source and receipt must be fresh.
+    """
     def usable(rows):
-        return [r for r in rows if r[0] > 0 and -0.1 <= (now_ns-r[0])/1e9 <= 2.0
+        return [r for r in rows if r[0] > 0 and
+                -0.1 <= (now_ns-r[0])/1e9 <= 10.0 and
+                -0.1 <= (now_ns-(r[4] if len(r) > 4 else r[0]))/1e9 <= 10.0
                 and r[1:3] == (1280, 800) and r[3]]
+    # Pixel indexing requires depth registered to the RGB optical frame.
     pairs = [(a[0], b[0]) for a in usable(images) for b in usable(clouds)
-             if abs(a[0]-b[0]) <= 50_000_000 and a[3] == b[3]]
-    return len({a for a, _ in pairs}) >= 2 and len({b for _, b in pairs}) >= 2
+             if a[3] == b[3] and abs(a[0]-b[0]) <= 100_000_000]
+    return any(a[0] < b[0] and a[1] < b[1] for a in pairs for b in pairs)
 
 
 @dataclass
@@ -469,19 +475,32 @@ class RosProbe:
                                  self.node.get_subscriptions_info_by_topic("/handControlCmd")),
                       "hand_control_node 的 /handControlCmd 订阅接口")
         elif command == "wait-camera":
-            from sensor_msgs.msg import Image, PointCloud2
-            from rclpy.qos import qos_profile_sensor_data
+            from sensor_msgs.msg import Image
+            from rclpy.qos import QoSProfile, ReliabilityPolicy
+            # Startup also runs before the project overlay is sourced.
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src/yolo_vision'))
+            from yolo_vision.sensor_input import sensor_metadata
             images, clouds = deque(maxlen=60), deque(maxlen=60)
-            def capture(rows, message):
-                stamp = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
-                rows.append((stamp, message.width, message.height, message.header.frame_id))
+            errors = []
+            def capture(rows, data):
+                try:
+                    rows.append((*sensor_metadata(data), self.node.get_clock().now().nanoseconds))
+                except ValueError as exc:
+                    errors[:] = [str(exc)]
             for kind, topic, rows in ((Image, '/camera/color/image_raw', images),
-                                      (PointCloud2, '/camera/depth/points', clouds)):
+                                      (Image, '/camera/depth/image_raw', clouds)):
                 self.subscriptions.append(self.node.create_subscription(kind, topic,
-                    lambda msg, rows=rows: capture(rows, msg), qos_profile_sensor_data))
-            self.wait(lambda: camera_pair_ready(images, clouds, self.node.get_clock().now().nanoseconds),
-                      "相机需要两组新鲜且时间戳更新的 1280×800 RGB/点云，配对误差≤50ms；"
-                      "请检查相机时间域、帧率和 QoS，不要仅凭 Topic 存在判断就绪")
+                    lambda data, rows=rows: capture(rows, data),
+                    QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT), raw=True))
+            try:
+                self.wait(lambda: camera_pair_ready(images, clouds, self.node.get_clock().now().nanoseconds),
+                          "相机尚无两组可配对 RGB/对齐深度图（不是物体数量要求）")
+            except RuntimeError as exc:
+                delta = min((abs(a[0]-b[0])/1e9 for a in images for b in clouds), default=None)
+                raise RuntimeError(f"{exc}；收到 RGB={len(images)} 帧，对齐深度={len(clouds)} 帧；"
+                                   f"最小时间差={delta}s，要求≤0.1s；"
+                                   f"最新 RGB={images[-1][:4] if images else None}，"
+                                   f"最新深度={clouds[-1][:4] if clouds else None}；解码错误={errors}") from exc
         elif command == "wait-lidar":
             from sensor_msgs.msg import PointCloud2
             self.subscribe(PointCloud2, "/livox/lidar")

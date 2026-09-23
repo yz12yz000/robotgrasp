@@ -1,0 +1,103 @@
+{
+  "input_topic": "/rim_locator/grasp_poses",
+  "base_frame": "base_link",
+  "grasp_offset": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "approach_height": 0.15,
+  "fixed_orientation": {
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0,
+    "w": 0.0
+  },
+  "motion_timeout": 90.0,
+  "gripper_timeout": 5.0,
+  "stop_timeout": 5.0,
+  "poll_interval": 0.05,
+  "input_timeout": 600.0,
+  "max_target_age": 600.0,
+  "future_tolerance": 0.1,
+  "tool_frame": "grasp_center",
+  "hand_control_setup": "~/handControl2_ws/install/setup.bash",
+  "execution_journal": "~/.local/state/robot_grasp_ws/executed_targets",
+  "workspace_min": {
+    "x": -1.5,
+    "y": -1.5,
+    "z": -0.1
+  },
+  "workspace_max": {
+    "x": 1.5,
+    "y": 1.5,
+    "z": 1.5
+  },
+  "publish_debug": true,
+  "controller_name": "scaled_joint_trajectory_controller",
+  "controller_manager": "/controller_manager",
+  "controller_namespace": "",
+  "controller_tip_frame": "auto",
+  "command_rate": 50.0,
+  "approach_speed": 0.03,
+  "descend_speed": 0.01,
+  "angular_speed": 0.15,
+  "position_tolerance": 0.002,
+  "orientation_tolerance": 0.02,
+  "settle_time": 0.25,
+  "feedback_timeout": 0.5,
+  "max_tracking_error": 0.03,
+  "max_tracking_angle": 0.2,
+  "linear_lateral_tolerance": 0.005,
+  "plan_only": true,
+  "move_group": "ur_manipulator",
+  "planning_link": "tool0",
+  "move_group_node": "/move_group",
+  "planning_pipeline": "",
+  "planner_id": "RRTConnectkConfigDefault",
+  "planning_timeout": 120.0,
+  "allowed_planning_time": 15.0,
+  "velocity_scaling": 0.1,
+  "acceleration_scaling": 0.1,
+  "cartesian_step": 0.005,
+  "jump_threshold": 2.0,
+  "max_joint_step": 0.25,
+  "validation_joint_step": 0.04,
+  "validation_time_step": 0.05,
+  "max_validation_samples": 5000,
+  "max_joint_velocity": 0.3,
+  "max_joint_acceleration": 0.3,
+  "start_joint_tolerance": 0.01,
+  "gripper_settle_time": 1.0,
+  "input_mode": "pose_array",
+  "place_ready_position": {
+    "x": 0.388824983,
+    "y": 0.389889715,
+    "z": 0.258283462
+  },
+  "place_ready_orientation": {
+    "x": -0.001843561,
+    "y": 0.999969986,
+    "z": -0.002705731,
+    "w": -0.007021887
+  },
+  "place_drop_distance": 0.2,
+  "place_dwell_time": 1.0,
+  "place_retreat": true,
+  "place_reference_frame": "base",
+  "place_reference_child_frame": "tool0",
+  "place_reference_position": {
+    "x": -0.424166034,
+    "y": -0.389831215,
+    "z": 0.424239498
+  },
+  "place_reference_orientation": {
+    "x": 0.999969947,
+    "y": 0.001839867,
+    "z": 0.007021497,
+    "w": -0.002723666
+  },
+  "ik_attempts": 8,
+  "ik_timeout": 0.25,
+  "max_ik_plans": 3
+}

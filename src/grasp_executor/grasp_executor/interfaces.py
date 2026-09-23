@@ -102,8 +102,20 @@ class HardwareInterfaces:
             raise TimeoutError("interface_readiness_timeout")
         return self.gripper.check_ready(remaining)
 
-    def prepare_plans(self, approach, grasp):
-        return self.arm.prepare_plans(approach, grasp)
+    def end_batch(self):
+        self.arm.end_batch()
+
+    def begin_batch(self):
+        self.arm.begin_batch()
+
+    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None):
+        return self.arm.prepare_plans(approach, grasp, place_ready, place_drop, place_retreat)
+
+    def resolve_place_pose(self):
+        resolver = getattr(self.arm, "resolve_place_pose", None)
+        if resolver is None:
+            return None
+        return resolver()
 
     def close(self):
         self.arm.close()

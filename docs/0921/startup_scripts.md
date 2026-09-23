@@ -2,9 +2,40 @@
 
 抓取已改用 **MoveIt OMPL + Cartesian 路径 + scaled_joint_trajectory_controller**，无需 Pilz。
 `run_grasp_position_control.sh` 负责就绪检查和控制器切换；`run_grasp_executor.sh` 负责规划和抓取。
-默认只预览，明确加 `--execute` 才会执行。视觉模块新增可选桌面区域识别；定位算法保持原样。
+默认只预览，明确加 `--execute` 才会执行。完整抓取放置推荐使用下述 place 入口，自动按视野中观测到的数量逐个抓放。
 完整后端说明、参数和测试见 [hardware_adapter.md](../hardware_adapter.md)；
 本次修改文件清单和实测结果见 [moveit_grasp_test_report.md](moveit_grasp_test_report.md)。
+
+## 完整抓取放置入口（自动按观测数量）
+
+```bash
+./run_pipeline_place_test.sh
+# 现场确认预览后，真实执行入口：
+./run_pipeline_place_execute.sh
+```
+
+默认全视野检测所有碗：0 个正常结束且不启动执行器，1 个处理 1 个，多个按抓取点的 XY 距离从近到远逐个完成抓取、放置、释放和退回。
+不再使用 `--single`／`--multi` 或 `multi_instance` 选择数量；旧 JSON 中合法布尔型模式字段兼容读取后忽略。
+先启动定位和视觉，收到有效目标后才启动抓取；执行入口也只在此时切换控制器。
+一批只观察一次，后续仍使用冻结坐标。
+
+可用 `--vision-config src/yolo_vision/config/table_roi.example.json` 限定 ROI，但指定后就不是全视野。
+配置按默认值 → place_config.json → 自定义显式字段合并；路径按调用目录解析。
+结果保存原始检测数、有效目标数、执行完成数及拒绝原因；漏掉或拒绝的目标不会被算作完成。
+
+place 入口的相机校验改由视觉节点对实际使用的同步帧进行，取消前置固定参数两帧检查；
+0 目标与相机没有数据明确区分。输入等待超时会列出收到的两路帧数、尺寸、frame_id 和最新时间差。
+硬件准备的独立 `wait-camera` 检查仍保留，两组指时间上连续的传感帧，不是两个物体。
+place 默认订阅 `/camera/color/image_raw`、`/camera/depth/image_raw` 和 `/camera/depth/camera_info`。
+对齐深度图按其内参还原 XYZ，16UC1 从毫米转成米，保留原像素、坐标系和采集时间；不接受未校正畸变或不匹配的内参。
+这避免依赖现场并行订阅时收不到的 16 MB `/camera/depth/points`。仅存在 Topic 不能证明输入可用。
+
+定位仍按每个实例的 8 mm 体素、26 邻域连通性保留占比至少 60% 的主组件；无优势组件则拒绝。
+`base_cloud` 是原始变换点云，`rim_candidates/local_points` 是过滤后定位子集。
+放置运行器仅在配置快照中延长下游首次输入等待至至少 `--timeout+35` 秒，不修改运动超时或目标有效期。
+单独启动节点时须自行协调等待时间。
+
+下文旧 pipeline 入口保留三段抓取用途，不包含放置。完整使用说明见 [New_run/README.md](../../New_run/README.md)。
 
 ## 1. 硬件准备
 
@@ -43,7 +74,7 @@ START_LIVOX=false LAUNCH_RVIZ=false ./run_robot_prepare.sh
 `BASE_OFFSET_X/Y/Z/YAW` 默认 0，与原脚本一致。
 相机使用本项目 `tools/grasp_camera.launch.py`：1280×800、15 FPS、系统采集时间戳、
 SENSOR_DATA QoS；关闭未使用的红外和彩色点云，保留对齐后的有序深度点云。
-启动检查要求至少两组新鲜、时间戳更新且相差不超过 50 ms 的 RGB/点云。
+启动检查要求至少两组新鲜、时间戳更新且相差不超过 100 ms 的 RGB/点云。
 RViz 如需订阅图像/点云，Reliability 选择 Best Effort。
 雷达复用原 MID360 JSON 和 PointCloud2 配置，并等待 `/livox/lidar` 数据，
 使用上面的 MoveIt/RViz 窗口，不再强制打开第二个雷达 RViz。
@@ -159,7 +190,7 @@ source install/setup.bash
 物体、相机和底盘相对位置必须保持不变。已尝试执行的目标写入本地日志，失败也不会自动复用；
 纯预览不占用目标执行记录。推荐始终按上述顺序采集新目标。
 
-目前 `table_enabled=false`，没有人为添加未经测量的桌面模型，也不要求必须存在世界障碍物。
+2026-09-23 起取消桌面模型与额外夹爪保护盒加载，不再执行 `run_table_model.sh`。准备脚本和抓取后端自动清理旧场景对象，旧 JSON 不再读取。
 MoveIt 自碰撞和已有场景检查保持开启；未建模桌面不会被检测到。
 夹爪沿用现有 Open/Close 命令并等待 1 秒；`success` 表示动作流程完成，
 状态中的 `grasp_verified=false` 明确表示尚无夹持成功的传感器反馈。

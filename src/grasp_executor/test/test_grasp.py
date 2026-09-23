@@ -296,6 +296,9 @@ def test_plan_only_rejects_direct_execution():
 def test_approach_ik_seed_and_joint_goal():
     from geometry_msgs.msg import Pose as RosPose
     a = bare_arm()
+    a.config = replace(a.config, ik_attempts=1)
+    a.joint_limits = {j: (-math.tau, math.tau, .3) for j in JOINTS}
+    a.node = NS(get_logger=lambda: NS(info=lambda message: None))
     a.RosPose = RosPose
     a.tip_to_tool = ((.02, 0., .095), (0.,0.,0.,1.))
     start = RobotState()
@@ -310,23 +313,29 @@ def test_approach_ik_seed_and_joint_goal():
             assert request.ik_request.avoid_collisions is True
             assert request.ik_request.ik_link_name == 'tool0'
             return NS(error_code=NS(val=1), solution=solved)
+        if name == '/check_state_validity':
+            assert request.group_name == ''
+            return NS(valid=True, contacts=[])
         goal = request.motion_plan_request.goal_constraints[0]
         assert [j.position for j in goal.joint_constraints] == [.2]*6
         assert request.motion_plan_request.start_state == start
         return NS(motion_plan_response=NS(error_code=NS(val=1), trajectory=trajectory()))
     a._call = call
     a._pose_plan(start, build_grasp_pose((.4,.1,.2), a.config), time.monotonic()+1)
-    assert calls == ['/compute_ik', '/plan_kinematic_path']
+    assert calls == ['/compute_ik', '/check_state_validity', '/plan_kinematic_path']
 
 
 def test_ik_failure_does_not_plan_motion():
     from geometry_msgs.msg import Pose as RosPose
     a = bare_arm()
+    a.config = replace(a.config, ik_attempts=1)
     a.RosPose = RosPose
     a.tip_to_tool = ((0.,0.,0.), (0.,0.,0.,1.))
     def call(kind, name, request, deadline):
         assert name == '/compute_ik'
         return NS(error_code=NS(val=-31))
     a._call = call
+    start = RobotState()
+    start.joint_state.name, start.joint_state.position = list(JOINTS), [0.]*6
     with pytest.raises(RuntimeError, match='approach_ik_failed:-31'):
-        a._pose_plan(RobotState(), build_grasp_pose((.4,.1,.2), a.config), time.monotonic()+1)
+        a._pose_plan(start, build_grasp_pose((.4,.1,.2), a.config), time.monotonic()+1)

@@ -69,17 +69,7 @@
   "max_joint_acceleration": 0.3,
   "start_joint_tolerance": 0.01,
   "gripper_settle_time": 1.0,
-  "table_enabled": false,
-  "table_id": "grasp_table",
-  "table_center": {
-    "x": 0.6,
-    "y": 0.0,
-    "z": -0.15
-  },
-  "table_size": {
-    "x": 0.8,
-    "y": 0.8,
-    "z": 0.05
-  },
-  "require_collision_world_for_execution": false
+  "ik_attempts": 8,
+  "ik_timeout": 0.25,
+  "max_ik_plans": 3
 }

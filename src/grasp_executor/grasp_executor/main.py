@@ -10,14 +10,15 @@ import time
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
-from geometry_msgs.msg import PointStamped, PoseStamped
+from geometry_msgs.msg import PointStamped, Pose, PoseArray, PoseStamped
 from rclpy.clock import Clock, ClockType
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import String
 
 from .config import load_config
-from .grasp import build_approach_pose, build_grasp_pose, run_task, validate_target
+from .grasp import (Pose as GraspPose, build_approach_pose, build_grasp_pose,
+                    run_batch_task, run_task, validate_target)
 from .interfaces import create_interfaces
 
 
@@ -44,7 +45,11 @@ class GraspNode(Node):
             if self.config.publish_debug:
                 self.approach_pub = self.create_publisher(PoseStamped, "~/approach_pose", retained_qos())
                 self.grasp_pub = self.create_publisher(PoseStamped, "~/grasp_pose", retained_qos())
-            self.subscription = self.create_subscription(PointStamped, self.config.input_topic, self.on_target, retained_qos())
+                self.place_ready_pub = self.create_publisher(PoseStamped, "~/place_ready_pose", retained_qos())
+                self.place_pub = self.create_publisher(PoseStamped, "~/place_pose", retained_qos())
+            callback = self.on_pose_array if self.config.input_mode == "pose_array" else self.on_target
+            message_type = PoseArray if self.config.input_mode == "pose_array" else PointStamped
+            self.subscription = self.create_subscription(message_type, self.config.input_topic, callback, retained_qos())
             self.wait_started = time.monotonic()
             self.timer = self.create_timer(0.05, self.tick, clock=Clock(clock_type=ClockType.STEADY_TIME))
             self.report("waiting_target", plan_only=self.config.plan_only, max_target_age=self.config.max_target_age)
@@ -57,6 +62,7 @@ class GraspNode(Node):
         details.setdefault("plan_only", self.config.plan_only if hasattr(self, "config") else True)
         if status == "success":
             details["grasp_verified"] = False
+            details["placement_verified"] = False
             details["gripper_feedback"] = "command_exit_and_settle_only"
         payload = json.dumps({"status": status, **details}, ensure_ascii=False)
         self.status_pub.publish(String(data=payload))
@@ -104,11 +110,50 @@ class GraspNode(Node):
             self.wait_started = time.monotonic()
             self.report("waiting_target", failed_step="validating", reason=str(exc), retry=True)
 
+    @staticmethod
+    def grasp_pose_from_ros(message_pose, config):
+        q = message_pose.orientation
+        return GraspPose((float(message_pose.position.x), float(message_pose.position.y),
+                          float(message_pose.position.z)),
+                         (float(q.x), float(q.y), float(q.z), float(q.w)),
+                         config.base_frame, config.tool_frame)
+
+    def on_pose_array(self, message):
+        if self.state != "waiting_target":
+            return
+        self.report("validating")
+        try:
+            stamp_ns = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
+            if message.header.frame_id != self.config.base_frame:
+                raise ValueError("frame_mismatch")
+            poses = [self.grasp_pose_from_ros(pose, self.config) for pose in message.poses]
+            self.worker = Thread(target=self.run_batch_job, args=(poses, stamp_ns), daemon=True)
+            self.worker.start()
+        except Exception as exc:
+            self.wait_started = time.monotonic()
+            self.report("waiting_target", failed_step="validating", reason=str(exc), retry=True)
+
     def run_job(self, point, stamp_ns):
         result = run_task(
             point, stamp_ns, lambda: self.get_clock().now().nanoseconds,
             self.interfaces, self.config,
             on_state=lambda status: self.events.put({"status": status}), cancel=self.cancel,
+        )
+        self.events.put(asdict(result))
+
+    def publish_batch_poses(self, approach, grasp, ready, drop):
+        if self.config.publish_debug:
+            stamp = self.get_clock().now().to_msg()
+            for publisher, pose in ((self.approach_pub, approach), (self.grasp_pub, grasp),
+                                    (self.place_ready_pub, ready), (self.place_pub, drop)):
+                publisher.publish(self.pose_message(pose, stamp))
+
+    def run_batch_job(self, poses, stamp_ns):
+        result = run_batch_task(
+            poses, stamp_ns, lambda: self.get_clock().now().nanoseconds,
+            self.interfaces, self.config,
+            on_state=lambda status: self.events.put({"status": status}), cancel=self.cancel,
+            on_poses=self.publish_batch_poses,
         )
         self.events.put(asdict(result))
 

@@ -20,11 +20,15 @@ def test_crop_mask_restored_to_full_image(monkeypatch):
         return [object()]
     arm.model=SimpleNamespace(predict=predict)
     local=np.zeros((4,5),dtype=bool);local[1:3,2:4]=True
-    monkeypatch.setattr(mod,'select_target',lambda result, cls, shape:mod.SegmentationResult(local,'bowl',.8))
-    result=arm.predict(image)
+    monkeypatch.setattr(mod,'select_targets',lambda result, cls, shape:[mod.SegmentationResult(local,'bowl',.8),mod.SegmentationResult(~local,'bowl',.7)])
+    results=arm.predict_all(image)
+    assert len(results)==2
+    result=results[0]
     expected=np.zeros((10,12),dtype=bool);expected[3:5,5:7]=True
     assert np.array_equal(result.mask,expected)
     assert result.confidence == .8
+    assert results[1].mask[2:6,3:8].sum()==(~local).sum()
+    assert not results[1].mask[:2].any()
 
 
 def test_roi_disabled_preserves_full_frame(monkeypatch):
@@ -35,5 +39,5 @@ def test_roi_disabled_preserves_full_frame(monkeypatch):
         return [object()]
     arm.model=SimpleNamespace(predict=predict)
     target=mod.SegmentationResult(np.ones((10,12),dtype=bool),'bowl',.8)
-    monkeypatch.setattr(mod,'select_target',lambda *args:target)
-    assert arm.predict(image) is target
+    monkeypatch.setattr(mod,'select_targets',lambda *args:[target])
+    assert arm.predict_all(image)==[target]

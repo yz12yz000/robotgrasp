@@ -1,6 +1,6 @@
 """ROS-free pose generation, input validation and fixed execution state machine."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 import math
@@ -26,6 +26,9 @@ class ExecutionResult:
     failed_step: str = ""
     reason: str = ""
     stop_error: str = ""
+    object_index: int = -1
+    object_count: int = 0
+    completed_count: int = 0
 
 
 def build_grasp_pose(rim_point, config):
@@ -46,6 +49,45 @@ def build_approach_pose(grasp_pose, config):
                 grasp_pose.frame_id, grasp_pose.tool_frame)
     check_workspace(pose, config)
     return pose
+
+
+def apply_grasp_offset(pose, config):
+    """Apply metres along base-frame XYZ once, preserving input orientation."""
+    validate_pose(pose, config)
+    offset = vector(config.grasp_offset, "xyz", "grasp_offset")
+    adjusted = replace(pose, position=tuple(float(a + b) for a, b in zip(pose.position, offset)))
+    check_workspace(adjusted, config)
+    return adjusted
+
+
+def build_place_ready_pose(config):
+    position = vector(config.place_ready_position, "xyz", "place_ready_position")
+    q = vector(config.place_ready_orientation, "xyzw", "place_ready_orientation")
+    norm = math.hypot(*q)
+    pose = Pose(position, tuple(v / norm for v in q), config.base_frame, config.tool_frame)
+    check_workspace(pose, config)
+    return pose
+
+
+def build_place_drop_pose(ready_pose, config):
+    x, y, z = ready_pose.position
+    pose = Pose((x, y, z - config.place_drop_distance), ready_pose.orientation,
+                ready_pose.frame_id, ready_pose.tool_frame)
+    check_workspace(pose, config)
+    return pose
+
+
+def validate_pose(pose, config):
+    if not isinstance(pose, Pose) or pose.frame_id != config.base_frame or pose.tool_frame != config.tool_frame:
+        raise ValueError("pose_frame_mismatch")
+    if len(pose.position) != 3 or len(pose.orientation) != 4:
+        raise ValueError("invalid_pose_shape")
+    if not all(math.isfinite(v) for v in pose.position + pose.orientation):
+        raise ValueError("invalid_pose_values")
+    norm = math.hypot(*pose.orientation)
+    if norm < 1e-12 or abs(norm - 1.) > 0.02:
+        raise ValueError("invalid_pose_orientation")
+    check_workspace(pose, config)
 
 
 def check_workspace(pose, config):
@@ -92,6 +134,24 @@ def claim_target(directory, frame_id, point, stamp_ns):
             os.fsync(stream.fileno())
     except FileExistsError as exc:
         raise ValueError("target_already_claimed") from exc
+
+
+def claim_batch(directory, poses, stamp_ns):
+    payload = {"frame_id": poses[0].frame_id if poses else "", "stamp_ns": int(stamp_ns),
+               "poses": [{"position": list(p.position), "orientation": list(p.orientation),
+                          "tool_frame": p.tool_frame} for p in poses]}
+    directory = Path(directory).expanduser()
+    directory.mkdir(parents=True, exist_ok=True)
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+    try:
+        with (directory / (digest + ".json")).open("x", encoding="utf-8") as stream:
+            stream.write(encoded)
+            stream.flush()
+            import os
+            os.fsync(stream.fileno())
+    except FileExistsError as exc:
+        raise ValueError("batch_already_claimed") from exc
 
 
 def bounded_call(function, timeout, cancel=None, timeout_reason="interface_timeout"):
@@ -205,6 +265,74 @@ def execute_grasp(approach_pose, grasp_pose, interfaces, config, on_state=None, 
         return ExecutionResult("failed", step, str(exc), stop_error)
 
 
+def execute_grasp_place(approach_pose, grasp_pose, place_ready, place_drop, interfaces, config,
+                        on_state=None, cancel=None):
+    """Execute one six-segment grasp/place sequence using prepared MoveIt plans."""
+    cancel = cancel if cancel is not None else Event()
+    on_state = on_state if on_state is not None else lambda state: None
+    step = "validating"
+    command_attempted = False
+
+    def motion(method, pose):
+        nonlocal command_attempted
+        if cancel.is_set():
+            raise RuntimeError("cancelled")
+        command_attempted = True
+        deadline = time.monotonic() + config.motion_timeout
+        accepted = bounded_call(lambda: method(pose, config.motion_timeout), config.motion_timeout,
+                                cancel, "motion_timeout")
+        if accepted is not True:
+            raise RuntimeError("motion_command_rejected")
+        while True:
+            remaining = deadline - time.monotonic()
+            reached = bounded_call(lambda: interfaces.is_pose_reached(remaining), remaining,
+                                   cancel, "motion_timeout")
+            if reached is True:
+                return
+            if reached is not False:
+                raise RuntimeError("invalid_motion_feedback")
+            if cancel.wait(min(config.poll_interval, max(0.0, deadline - time.monotonic()))):
+                raise RuntimeError("cancelled")
+
+    def gripper(method):
+        if bounded_call(lambda: method(config.gripper_timeout), config.gripper_timeout,
+                        cancel, "gripper_timeout") is not True:
+            raise RuntimeError("gripper_command_failed")
+
+    try:
+        for pose in (approach_pose, grasp_pose, place_ready, place_drop):
+            validate_pose(pose, config)
+        if (approach_pose.position[:2] != grasp_pose.position[:2]
+                or approach_pose.orientation != grasp_pose.orientation
+                or approach_pose.position[2] <= grasp_pose.position[2]):
+            raise ValueError("invalid_vertical_approach")
+        if (place_ready.position[:2] != place_drop.position[:2]
+                or place_ready.orientation != place_drop.orientation
+                or place_ready.position[2] <= place_drop.position[2]):
+            raise ValueError("invalid_vertical_place")
+        step = "moving_to_approach"; on_state(step); motion(interfaces.move_to_pose, approach_pose)
+        step = "opening_gripper"; on_state(step); gripper(interfaces.open_gripper)
+        step = "moving_to_grasp"; on_state(step); motion(interfaces.move_linear, grasp_pose)
+        step = "closing_gripper"; on_state(step); gripper(interfaces.close_gripper)
+        step = "lifting_after_grasp"; on_state(step); motion(interfaces.move_linear, approach_pose)
+        step = "moving_to_place_ready"; on_state(step); motion(interfaces.move_to_pose, place_ready)
+        step = "moving_to_place"; on_state(step); motion(interfaces.move_linear, place_drop)
+        step = "holding_before_release"; on_state(step)
+        deadline = time.monotonic() + config.place_dwell_time
+        while time.monotonic() < deadline:
+            if cancel.wait(min(config.poll_interval, max(0.0, deadline - time.monotonic()))):
+                raise RuntimeError("cancelled")
+        step = "releasing_gripper"; on_state(step); gripper(interfaces.open_gripper)
+        if config.place_retreat:
+            step = "retreating_from_place"; on_state(step); motion(interfaces.move_linear, place_ready)
+        if callable(getattr(interfaces, "finish", None)):
+            interfaces.finish()
+        return ExecutionResult("success")
+    except Exception as exc:
+        stop_error = stop_safely(interfaces, config.stop_timeout) if command_attempted else ""
+        return ExecutionResult("failed", step, str(exc), stop_error)
+
+
 def run_task(point, stamp_ns, now_ns, interfaces, config, on_state=None, cancel=None):
     """Preflight never stops the arm: no task-owned motion has started yet."""
     cancel = cancel if cancel is not None else Event()
@@ -238,3 +366,80 @@ def run_task(point, stamp_ns, now_ns, interfaces, config, on_state=None, cancel=
         cancel.set()
         return ExecutionResult("failed", step, str(exc))
     return execute_grasp(approach_pose, grasp_pose, interfaces, config, on_state, cancel)
+
+
+def run_batch_task(poses, stamp_ns, now_ns, interfaces, config, on_state=None, cancel=None, on_poses=None):
+    """Plan and execute a frozen PoseArray from nearest to farthest."""
+    if not poses:
+        return ExecutionResult("no_targets", object_count=0, completed_count=0)
+    cancel = cancel if cancel is not None else Event()
+    on_state = on_state if on_state is not None else lambda state: None
+    step = "preflight"
+    index, completed, targets = -1, 0, []
+    try:
+        if not config.place_retreat:
+            raise ValueError("batch_requires_place_retreat")
+        original_targets = list(poses)
+        targets = []
+        for pose in original_targets:
+            validate_pose(pose, config)
+            validate_target(pose.frame_id, pose.position, stamp_ns, now_ns(), config)
+            adjusted = apply_grasp_offset(pose, config)
+            build_approach_pose(adjusted, config)
+            targets.append(adjusted)
+        # Journal identity stays tied to the original observation, including
+        # its historical stable distance ordering, regardless of calibration.
+        original_targets.sort(key=lambda p: math.hypot(*p.position[:2]))
+        # Defensive sorting also covers PoseArrays sent by another publisher.
+        targets.sort(key=lambda p: math.hypot(*p.position[:2]))
+        if callable(getattr(interfaces, "begin_batch", None)):
+            interfaces.begin_batch()
+        ready = drop = None
+        claimed = False
+        for index, grasp_pose in enumerate(targets):
+            if cancel.is_set():
+                raise RuntimeError("cancelled")
+            step = f"readiness_{index}"
+            approach_pose = build_approach_pose(grasp_pose, config)
+            available = bounded_call(lambda: interfaces.check_ready(config.motion_timeout),
+                                     config.motion_timeout, cancel, "interface_readiness_timeout")
+            if available is not True:
+                raise RuntimeError("interfaces_not_ready")
+            if ready is None:
+                ready = (interfaces.resolve_place_pose()
+                         if callable(getattr(interfaces, "resolve_place_pose", None)) else None)
+                ready = ready if ready is not None else build_place_ready_pose(config)
+                drop = build_place_drop_pose(ready, config)
+                validate_pose(ready, config); validate_pose(drop, config)
+            if on_poses:
+                on_poses(approach_pose, grasp_pose, ready, drop)
+            step = f"planning_{index}"; on_state(step)
+            planned = bounded_call(lambda ap=approach_pose, gp=grasp_pose:
+                                   interfaces.prepare_plans(ap, gp, ready, drop, ready),
+                                   7 * config.planning_timeout, cancel, "planning_timeout")
+            if planned is not True:
+                raise RuntimeError("planning_failed")
+            if cancel.is_set():
+                raise RuntimeError("cancelled")
+            if config.plan_only:
+                continue
+            if not claimed:
+                validate_target(grasp_pose.frame_id, grasp_pose.position, stamp_ns, now_ns(), config)
+                claim_batch(config.execution_journal, original_targets, stamp_ns)
+                claimed = True
+            result = execute_grasp_place(approach_pose, grasp_pose, ready, drop, interfaces,
+                                         config, lambda state: on_state(f"object_{index}:{state}"), cancel)
+            if result.status != "success":
+                return replace(result, object_index=index, object_count=len(targets), completed_count=completed)
+            completed += 1
+        return ExecutionResult("planned" if config.plan_only else "success",
+                               object_count=len(targets), completed_count=completed)
+    except Exception as exc:
+        # Cancel outstanding service workers on timeout as well as explicit
+        # cancellation. No automatic release, retry, or next-object motion.
+        cancel.set()
+        return ExecutionResult("failed", step, str(exc), object_index=index,
+                               object_count=len(targets), completed_count=completed)
+    finally:
+        if callable(getattr(interfaces, "end_batch", None)):
+            interfaces.end_batch()

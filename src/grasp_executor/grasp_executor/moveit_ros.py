@@ -14,9 +14,10 @@ from threading import Event, RLock
 import time
 import xml.etree.ElementTree as ET
 
-from .cartesian import pose_error, tool_target_to_tip
+from .cartesian import multiply, normalized, pose_error, rotate, tool_target_to_tip
 from .grasp import Pose, check_workspace
 from .trajectory import samples, seconds, slow_down, validate_trajectory
+from .ik_angles import nearest_equivalent_angles, revolute_bounds
 
 
 JOINTS = ("shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
@@ -205,6 +206,54 @@ class MoveItArm:
         check_workspace(pose, self.config)
         return pose
 
+    def resolve_place_pose(self):
+        """Convert the fixed recorded TCP pose into the configured tool frame.
+
+        The reference is a pose of ``place_reference_child_frame`` expressed in
+        ``place_reference_frame``.  TF supplies the parent-frame conversion and
+        the static child-to-grasp-center transform; the target returned to the
+        executor is always base_frame/tool_frame.
+        """
+        from rclpy.time import Time
+        reference = Pose(tuple(self.config.place_reference_position[k] for k in "xyz"),
+                         normalized(tuple(self.config.place_reference_orientation[k] for k in "xyzw")),
+                         self.config.place_reference_frame, self.config.place_reference_child_frame)
+        identity = Pose((0., 0., 0.), (0., 0., 0., 1.),
+                         self.config.base_frame, self.config.base_frame)
+        if self.config.place_reference_frame == self.config.base_frame:
+            parent = identity
+        else:
+            transform = self.buffer.lookup_transform(self.config.base_frame,
+                                                     self.config.place_reference_frame, Time())
+            t, q = transform.transform.translation, transform.transform.rotation
+            parent = Pose((t.x, t.y, t.z), normalized((q.x, q.y, q.z, q.w)),
+                          self.config.base_frame, self.config.place_reference_frame)
+        if self.config.place_reference_child_frame == self.config.tool_frame:
+            child = Pose((0., 0., 0.), (0., 0., 0., 1.),
+                         self.config.place_reference_child_frame, self.config.tool_frame)
+        else:
+            transform = self.buffer.lookup_transform(self.config.place_reference_child_frame,
+                                                     self.config.tool_frame, Time())
+            t, q = transform.transform.translation, transform.transform.rotation
+            child = Pose((t.x, t.y, t.z), normalized((q.x, q.y, q.z, q.w)),
+                         self.config.place_reference_child_frame, self.config.tool_frame)
+        position = tuple(a + b for a, b in zip(parent.position, rotate(parent.orientation, reference.position)))
+        position = tuple(a + b for a, b in zip(position, rotate(multiply(parent.orientation, reference.orientation), child.position)))
+        orientation = multiply(multiply(parent.orientation, reference.orientation), child.orientation)
+        result = Pose(position, normalized(orientation), self.config.base_frame, self.config.tool_frame)
+        check_workspace(result, self.config)
+        # The recorded base_link/tool-frame pose is the immutable execution
+        # target.  The reference-frame conversion above is only an audit path;
+        # reject a changed/miswired static TF instead of silently moving to a
+        # different place pose.
+        configured = Pose(tuple(self.config.place_ready_position[k] for k in "xyz"),
+                          normalized(tuple(self.config.place_ready_orientation[k] for k in "xyzw")),
+                          self.config.base_frame, self.config.tool_frame)
+        distance, angle = pose_error(result, configured)
+        if distance > self.config.position_tolerance or angle > self.config.orientation_tolerance:
+            raise RuntimeError("place_reference_mismatch_configured_pose")
+        return result
+
     def _robot_running(self):
         if self.config.plan_only:
             return
@@ -247,12 +296,8 @@ class MoveItArm:
             raise RuntimeError("moveit_group_frame_mismatch")
         self.joint_limits = {}
         for name in JOINTS:
-            limit = model.find(f"./joint[@name='{name}']/limit")
-            if limit is None:
-                raise RuntimeError("joint_limit_missing:" + name)
-            low, high, velocity = (float(limit.get(k)) for k in ('lower', 'upper', 'velocity'))
-            if not all(math.isfinite(v) for v in (low, high, velocity)) or low >= high or velocity <= 0:
-                raise RuntimeError("invalid_joint_limit:" + name)
+            joint = model.find(f"./joint[@name='{name}']")
+            low, high, velocity = revolute_bounds(joint)
             self.joint_limits[name] = (low, high, min(velocity*self.config.velocity_scaling, self.config.max_joint_velocity))
         # Tool conversion must traverse fixed joints only.
         parents = {joint.find('child').get('link'): joint for joint in model.findall('joint')}
@@ -321,77 +366,139 @@ class MoveItArm:
 
     def _valid(self, state, deadline):
         from moveit_msgs.srv import GetStateValidity
-        request = GetStateValidity.Request(robot_state=state, group_name=self.config.move_group)
+        # Empty group checks all URDF robot links and any attached objects. SRDF
+        # adjacent-link exemptions are retained in the PlanningScene ACM.
+        request = GetStateValidity.Request(robot_state=state, group_name="")
         result = self._call(GetStateValidity, '/check_state_validity', request, deadline)
         if not result.valid:
             contacts = ','.join(c.contact_body_1 + '/' + c.contact_body_2 for c in result.contacts[:3])
             raise RuntimeError("collision_or_invalid_state:" + contacts)
 
     def _scene(self, deadline):
-        from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
-        from moveit_msgs.srv import ApplyPlanningScene, GetPlanningScene
-        from shape_msgs.msg import SolidPrimitive
-        if self.config.table_enabled:
-            obj = CollisionObject()
-            obj.id, obj.header.frame_id, obj.operation = self.config.table_id, self.config.base_frame, CollisionObject.ADD
-            primitive = SolidPrimitive(type=SolidPrimitive.BOX, dimensions=[self.config.table_size[k] for k in 'xyz'])
-            pose = self.RosPose()
-            pose.position.x, pose.position.y, pose.position.z = (self.config.table_center[k] for k in 'xyz')
-            pose.orientation.w = 1.0
-            obj.primitives, obj.primitive_poses = [primitive], [pose]
-            scene = PlanningScene(is_diff=True)
-            scene.robot_state.is_diff = True
-            scene.world.collision_objects = [obj]
-            result = self._call(ApplyPlanningScene, '/apply_planning_scene', ApplyPlanningScene.Request(scene=scene), deadline)
-            if not result.success:
-                raise RuntimeError("table_scene_apply_failed")
-        request = GetPlanningScene.Request()
-        request.components.components = (PlanningSceneComponents.WORLD_OBJECT_NAMES | PlanningSceneComponents.OCTOMAP)
-        scene = self._call(GetPlanningScene, '/get_planning_scene', request, deadline).scene
+        from .scene_cleanup import clear_legacy_objects
+        scene = clear_legacy_objects(self._call, deadline)
         self.world_objects = [obj.id for obj in scene.world.collision_objects]
-        if not self.world_objects and not scene.world.octomap.octomap.data:
-            if not self.config.plan_only and self.config.require_collision_world_for_execution:
-                raise RuntimeError("collision_world_empty:configure_table_or_existing_scene")
-            self.node.get_logger().info("collision_world_empty: self-collision checks remain enabled; real tabletop is not modeled")
+        self.node.get_logger().info("scene_ready: no desktop or extra gripper envelope loaded")
 
-    def _pose_plan(self, start, goal, deadline):
-        from moveit_msgs.msg import Constraints, JointConstraint
-        from moveit_msgs.srv import GetMotionPlan, GetPositionIK
+    def _ik_solutions(self, start, goal, deadline):
+        from moveit_msgs.srv import GetPositionIK, GetStateValidity
         target = tool_target_to_tip(goal, self.tip_to_tool, self.config.planning_link)
-        # Seed IK from the actual start before asking OMPL to plan. Sampling a
-        # free pose goal can choose a distant wrist/elbow branch even for a tiny
-        # TCP displacement. The explicit joint goal keeps the local IK branch.
-        ik = GetPositionIK.Request()
-        ik.ik_request.group_name = self.config.move_group
-        ik.ik_request.robot_state = start
-        ik.ik_request.ik_link_name = self.config.planning_link
-        ik.ik_request.pose_stamped.header.frame_id = self.config.base_frame
-        ik.ik_request.pose_stamped.pose = self._ros_pose(target)
-        ik.ik_request.avoid_collisions = True
-        ik.ik_request.timeout.sec = max(1, math.ceil(self.config.allowed_planning_time))
-        solved = self._call(GetPositionIK, '/compute_ik', ik, deadline)
-        if solved.error_code.val != 1:
-            raise RuntimeError(f"approach_ik_failed:{solved.error_code.val}")
-        solution = dict(zip(solved.solution.joint_state.name, solved.solution.joint_state.position))
-        if any(j not in solution or not math.isfinite(solution[j]) for j in JOINTS):
-            raise RuntimeError("invalid_ik_solution")
-        request = GetMotionPlan.Request()
-        plan = request.motion_plan_request
-        plan.group_name, plan.pipeline_id, plan.planner_id = self.config.move_group, self.config.planning_pipeline, self.config.planner_id
-        plan.start_state = start
-        plan.goal_constraints = [Constraints(joint_constraints=[JointConstraint(joint_name=j,
-            position=solution[j], tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0) for j in JOINTS])]
-        plan.num_planning_attempts, plan.allowed_planning_time = 3, self.config.allowed_planning_time
-        plan.max_velocity_scaling_factor = self.config.velocity_scaling
-        plan.max_acceleration_scaling_factor = self.config.acceleration_scaling
-        plan.workspace_parameters.header.frame_id = self.config.base_frame
-        for k in 'xyz':
-            setattr(plan.workspace_parameters.min_corner, k, self.config.workspace_min[k])
-            setattr(plan.workspace_parameters.max_corner, k, self.config.workspace_max[k])
-        response = self._call(GetMotionPlan, '/plan_kinematic_path', request, deadline).motion_plan_response
-        if response.error_code.val != 1:
-            raise RuntimeError(f"approach_planning_failed:{response.error_code.val}")
-        return response.trajectory
+        reference = dict(zip(start.joint_state.name, start.joint_state.position))
+        if any(j not in reference or not math.isfinite(reference[j]) for j in JOINTS):
+            raise ValueError('invalid_ik_reference_state')
+        candidates, errors = [], []
+        # KDL's search may return a different elbow/wrist branch even when seeded
+        # from current joints. Explore a bounded set, then rank measured travel.
+        seeds = [(None, 0.), ('wrist_3_joint', math.pi), ('wrist_3_joint', -math.pi),
+                 ('elbow_joint', 1.), ('elbow_joint', -1.),
+                 ('wrist_1_joint', math.pi), ('wrist_1_joint', -math.pi), (None, 0.)]
+        for attempt in range(self.config.ik_attempts):
+            self._check_cancel()
+            joint, delta = seeds[attempt % len(seeds)]
+            seed = start
+            if joint is not None:
+                low, high = self.joint_limits[joint][:2]
+                seed = self._state_at(start, [joint], [min(high, max(low, reference[joint]+delta))])
+            ik = GetPositionIK.Request()
+            ik.ik_request.group_name = self.config.move_group
+            ik.ik_request.robot_state = seed
+            ik.ik_request.ik_link_name = self.config.planning_link
+            ik.ik_request.pose_stamped.header.frame_id = self.config.base_frame
+            ik.ik_request.pose_stamped.pose = self._ros_pose(target)
+            ik.ik_request.avoid_collisions = True
+            remaining = deadline-time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('ik_search_deadline')
+            duration = min(self.config.ik_timeout, remaining)
+            ik.ik_request.timeout.sec, ik.ik_request.timeout.nanosec = divmod(round(duration*1e9), 10**9)
+            solved = self._call(GetPositionIK, '/compute_ik', ik, deadline)
+            if solved.error_code.val != 1:
+                errors.append(f'approach_ik_failed:{solved.error_code.val}')
+                continue
+            raw = dict(zip(solved.solution.joint_state.name, solved.solution.joint_state.position))
+            if any(j not in raw or not math.isfinite(raw[j]) for j in JOINTS):
+                raise RuntimeError('invalid_ik_solution')
+            # Only target angles are normalized, never measured feedback or
+            # points of an already planned/executing trajectory.
+            try:
+                solution = nearest_equivalent_angles({j: raw[j] for j in JOINTS}, reference, self.joint_limits)
+            except ValueError as exc:
+                if not str(exc).startswith('ik_joint_outside_limits:'):
+                    raise
+                errors.append(str(exc))
+                continue
+            values = [solution[j] for j in JOINTS]
+            if any(max(abs(x-y) for x, y in zip(values, c['positions'])) < 1e-3 for c in candidates):
+                continue
+            goal_state = self._state_at(start, JOINTS, values)
+            validity = self._call(GetStateValidity, '/check_state_validity',
+                GetStateValidity.Request(robot_state=goal_state, group_name=''), deadline)
+            if not validity.valid:
+                contacts = ','.join(f'{c.contact_body_1}/{c.contact_body_2}' for c in validity.contacts[:3])
+                errors.append('approach_goal_collision:' + contacts)
+                continue
+            changes = [solution[j]-reference[j] for j in JOINTS]
+            candidates.append(dict(positions=values, cost=sum(v*v for v in changes),
+                                   max_delta=max(abs(v) for v in changes),
+                                   equivalent_turns={j: round((solution[j]-raw[j])/math.tau)
+                                       for j in JOINTS if abs(solution[j]-raw[j]) > 1e-8}))
+        if not candidates:
+            raise RuntimeError(errors[-1] if errors else 'approach_ik_failed:no_valid_solution')
+        candidates.sort(key=lambda c: (c['cost'], c['positions']))
+        self.node.get_logger().info('ik_candidates: ' + str([
+            {k:v for k,v in c.items() if k != 'positions'} for c in candidates]))
+        return candidates
+
+    def _pose_plan(self, start, goal, deadline, validate=None):
+        """Plan near IK branches; optionally return the first fully validated segment."""
+        from moveit_msgs.msg import Constraints, JointConstraint
+        from moveit_msgs.srv import GetMotionPlan, GetStateValidity
+        candidates = self._ik_solutions(start, goal, deadline)
+        failures = []
+        for index, candidate in enumerate(candidates[:self.config.max_ik_plans]):
+            self._check_cancel()
+            request = GetMotionPlan.Request()
+            plan = request.motion_plan_request
+            plan.group_name, plan.pipeline_id, plan.planner_id = self.config.move_group, self.config.planning_pipeline, self.config.planner_id
+            plan.start_state = start
+            plan.goal_constraints = [Constraints(joint_constraints=[JointConstraint(joint_name=j,
+                position=value, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0)
+                for j, value in zip(JOINTS, candidate['positions'])])]
+            remaining = deadline-time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('pose_planning_deadline:' + ';'.join(failures))
+            plan.num_planning_attempts = 3
+            plan.allowed_planning_time = min(self.config.allowed_planning_time, remaining)
+            plan.max_velocity_scaling_factor = self.config.velocity_scaling
+            plan.max_acceleration_scaling_factor = self.config.acceleration_scaling
+            plan.workspace_parameters.header.frame_id = self.config.base_frame
+            for k in 'xyz':
+                setattr(plan.workspace_parameters.min_corner, k, self.config.workspace_min[k])
+                setattr(plan.workspace_parameters.max_corner, k, self.config.workspace_max[k])
+            response = self._call(GetMotionPlan, '/plan_kinematic_path', request, deadline).motion_plan_response
+            if response.error_code.val != 1:
+                validity = self._call(GetStateValidity, '/check_state_validity',
+                    GetStateValidity.Request(robot_state=start, group_name=''), deadline)
+                contacts = ','.join(f'{c.contact_body_1}/{c.contact_body_2}' for c in validity.contacts[:3])
+                reason = (f'approach_planning_failed:{response.error_code.val}:candidate={index}'
+                          f':start_valid={validity.valid}:max_joint_delta={candidate["max_delta"]:.3f}'
+                          + (':' + contacts if contacts else ''))
+            else:
+                try:
+                    return validate(response.trajectory) if validate else response.trajectory
+                except (RuntimeError, ValueError) as exc:
+                    # A rejected path never becomes executable. Try another IK
+                    # branch only for geometric/trajectory validation failures.
+                    reason = str(exc)
+                    if not reason.startswith(('motion_timeout_too_short_for_trajectory',
+                        'collision_or_invalid_state', 'trajectory_joint_limit',
+                        'planned_endpoint_mismatch', 'trajectory_validation_sample_limit',
+                        'cartesian_path_incomplete', 'cartesian_joint_jump',
+                        'cartesian_path_deviates_from_vertical')):
+                        raise
+            failures.append(reason)
+            self.node.get_logger().warning(reason)
+        raise RuntimeError(';'.join(failures))
 
     def _linear_plan(self, start, goal, deadline):
         from moveit_msgs.srv import GetCartesianPath
@@ -445,40 +552,72 @@ class MoveItArm:
                 factor = max(factor, distance / ((t-old_t)*speed), angle / ((t-old_t)*self.config.angular_speed))
             previous = t, pose
             positions.append(q)
-        if pose_error(previous[1], goal)[0] > self.config.position_tolerance or pose_error(previous[1], goal)[1] > self.config.orientation_tolerance:
-            raise RuntimeError("planned_endpoint_mismatch")
+        endpoint_distance, endpoint_angle = pose_error(previous[1], goal)
+        if endpoint_distance > self.config.position_tolerance or endpoint_angle > self.config.orientation_tolerance:
+            raise RuntimeError(f"planned_endpoint_mismatch:position={endpoint_distance:.6f}m:angle={endpoint_angle:.6f}rad")
         timed = slow_down(trajectory, max(1.0, factor * 1.05))
         if seconds(timed.joint_trajectory.points[-1].time_from_start) + self.config.settle_time >= self.config.motion_timeout:
             raise RuntimeError(f"motion_timeout_too_short_for_trajectory:{name}:"
                                f"duration={seconds(timed.joint_trajectory.points[-1].time_from_start):.2f}s,scale={factor:.2f}")
         return Segment(name, timed, deepcopy(start), goal, linear, positions)
 
-    def prepare_plans(self, approach, grasp):
+    def end_batch(self):
+        self.preview_state = None
+
+    def begin_batch(self):
+        # Only plan-only batches use a virtual start; execution always reads
+        # measured joints after the preceding object's retreat completes.
+        self.preview_state = None
+
+    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None):
         from moveit_msgs.msg import DisplayTrajectory
         deadline = time.monotonic() + self.config.planning_timeout
         self._scene(deadline)
-        start = self._state(stationary=True)
+        actual_start = self._state(stationary=True)
+        start = (deepcopy(self.preview_state) if self.config.plan_only
+                 and getattr(self, "preview_state", None) is not None else actual_start)
         original = deepcopy(start)
         self._valid(start, deadline)
         plans = []
-        for name, goal, linear in (('approach', approach, False), ('descend', grasp, True), ('lift', approach, True)):
+        groups = [[('approach', approach), ('descend', grasp), ('lift', approach)]]
+        if place_ready is not None or place_drop is not None:
+            if place_ready is None or place_drop is None:
+                raise ValueError("incomplete_place_plan")
+            groups.append([('place_ready', place_ready), ('place_drop', place_drop),
+                           ('place_retreat', place_retreat or place_ready)])
+        for goals in groups:
             self._check_cancel()
             deadline = time.monotonic() + self.config.planning_timeout
-            trajectory = self._linear_plan(start, goal, deadline) if linear else self._pose_plan(start, goal, deadline)
-            segment = self._validate_and_time(name, trajectory, start, goal, linear, deadline)
-            plans.append(segment)
-            joint = segment.trajectory.joint_trajectory
+            name, goal = goals[0]
+
+            def validate_triplet(trajectory):
+                # An approach IK branch is useful only if it can also descend
+                # and retreat. Commit none of this candidate until all pass.
+                triplet = [self._validate_and_time(name, trajectory, start, goal, False, deadline)]
+                candidate_start = start
+                for next_name, next_goal in goals[1:]:
+                    joint = triplet[-1].trajectory.joint_trajectory
+                    candidate_start = self._state_at(candidate_start, joint.joint_names, joint.points[-1].positions)
+                    path = self._linear_plan(candidate_start, next_goal, deadline)
+                    triplet.append(self._validate_and_time(next_name, path, candidate_start, next_goal, True, deadline))
+                return triplet
+
+            triplet = self._pose_plan(start, goal, deadline, validate=validate_triplet)
+            plans.extend(triplet)
+            joint = triplet[-1].trajectory.joint_trajectory
             start = self._state_at(start, joint.joint_names, joint.points[-1].positions)
         self._check_cancel()
         first = plans[0].trajectory.joint_trajectory
-        if self._joint_error(self._state(stationary=True), first.joint_names, first.points[0].positions) > self.config.start_joint_tolerance:
+        if self._joint_error(self._state(stationary=True), actual_start.joint_state.name, actual_start.joint_state.position) > self.config.start_joint_tolerance:
             raise RuntimeError("robot_moved_during_planning")
+        if self.config.plan_only and hasattr(self, "preview_state"):
+            self.preview_state = deepcopy(start)
         self.plans, self.next_segment = plans, 0
         display = DisplayTrajectory(model_id=self.model_id, trajectory_start=original,
                                     trajectory=[p.trajectory for p in plans])
         self.display.publish(display)
         summary = ', '.join(f'{p.name}={seconds(p.trajectory.joint_trajectory.points[-1].time_from_start):.2f}s' for p in plans)
-        self.node.get_logger().info('complete_grasp_plan: ' + summary)
+        self.node.get_logger().info(('complete_place_plan: ' if len(plans) == 6 else 'complete_grasp_plan: ') + summary)
         return True
 
     def _begin(self, pose, timeout, linear):
