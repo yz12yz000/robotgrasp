@@ -19,8 +19,9 @@ from std_msgs.msg import Header, String
 from tf2_ros import Buffer, TransformException, TransformListener
 
 from .config import load_config
+from .candidate_protocol import encode_candidate_batch
 from .pointcloud import make_cloud, read_xyz_object_ids
-from .rim_detection import locate_grasp_pose, transform_points, valid_points
+from .rim_detection import locate_grasp_candidates, transform_points, valid_points
 
 
 def retained_qos():
@@ -36,11 +37,17 @@ class RimNode(Node):
         self.pending = None
         self.tf_reason = "tf_unavailable"
         try:
+            self.task_id = self.declare_parameter("task_id", "").value
+            self.observation_id = self.declare_parameter("observation_id", "").value
+            if (not isinstance(self.task_id, str) or not isinstance(self.observation_id, str)
+                    or bool(self.task_id) != bool(self.observation_id)):
+                raise ValueError("invalid_observation_context")
             share = Path(get_package_share_directory("rim_locator"))
             path = self.declare_parameter("config_path", str(share / "config/config.json")).value
             self.config = load_config(path)
             self.publisher = self.create_publisher(PointStamped, self.config.output_topic, retained_qos())
             self.poses_publisher = self.create_publisher(PoseArray, self.config.poses_topic, retained_qos())
+            self.candidates_publisher = self.create_publisher(String, self.config.candidates_topic, retained_qos())
             if self.config.publish_debug:
                 self.cloud_pub = self.create_publisher(PointCloud2, "~/base_cloud", retained_qos())
                 self.rim_pub = self.create_publisher(PointCloud2, "~/rim_candidates", retained_qos())
@@ -57,7 +64,8 @@ class RimNode(Node):
 
     def report(self, status, **details):
         self.state = status
-        payload = json.dumps({"status": status, **details}, ensure_ascii=False)
+        payload = json.dumps({"status": status, "task_id": getattr(self, "task_id", ""),
+                              "observation_id": getattr(self, "observation_id", ""), **details}, ensure_ascii=False)
         self.status_pub.publish(String(data=payload))
         self.get_logger().info(payload)
 
@@ -72,8 +80,6 @@ class RimNode(Node):
             points = valid_points(points)
             if len(points) == 0:
                 raise ValueError("empty_cloud")
-            if len(points) < self.config.min_points:
-                raise ValueError("insufficient_points")
             if len(object_ids) != len(points):
                 raise ValueError("object_id_length_mismatch")
             if cloud.header.frame_id == self.config.target_frame:
@@ -132,7 +138,8 @@ class RimNode(Node):
                 rejected.append({"object_id": object_id, "reason": "insufficient_points"})
                 continue
             try:
-                result = locate_grasp_pose(object_points, self.config)
+                candidates = locate_grasp_candidates(object_points, self.config)
+                result = candidates[0]
             except ValueError as exc:
                 detail = {"object_id": object_id, "reason": str(exc)}
                 if getattr(exc, 'diagnostics', None):
@@ -145,18 +152,41 @@ class RimNode(Node):
                                  "z": float(result.point[2])})
                 continue
             distance = float(np.hypot(result.point[0], result.point[1]))
-            results.append((distance, object_id, result))
+            candidates = [candidate for candidate in candidates
+                          if self.config.min_output_z <= float(candidate.point[2]) <= self.config.max_output_z]
+            results.append((distance, object_id, result, candidates))
+        results.sort(key=lambda item: (item[0], item[1]))
+        stamp_ns = stamp.sec * 1_000_000_000 + stamp.nanosec
+        batch = {
+            "schema_version": 1,
+            "task_id": getattr(self, "task_id", ""),
+            "observation_id": getattr(self, "observation_id", ""),
+            "source_stamp_ns": stamp_ns,
+            "frame_id": self.config.target_frame,
+            "tool_frame": self.config.tool_frame,
+            "objects": [
+                {"object_id": object_id, "distance": distance,
+                 "candidates": [
+                     {"candidate_id": index, "position": [float(v) for v in candidate.point],
+                      "orientation": [float(v) for v in candidate.orientation],
+                      "geometry": candidate.diagnostics}
+                     for index, candidate in enumerate(candidates)]}
+                for distance, object_id, result, candidates in results],
+            "rejected": rejected,
+        }
+        # Publish a complete outcome even if every detected object lacks geometry.
+        # Empty candidates are never represented as a graspable object group.
+        self.candidates_publisher.publish(String(data=encode_candidate_batch(batch)))
         if not results:
             self.report("failed", failed_step="processing", reason="pose_not_found:no_valid_object",
-                        object_count=0, rejected=rejected)
+                        source_stamp_ns=stamp_ns, object_count=0, rejected=rejected)
             return
-        results.sort(key=lambda item: (item[0], item[1]))
         # Preserve observation time so stale retained detections cannot be
         # relabelled as fresh targets by restarting this node.
         message = PointStamped(header=header)
         message.point.x, message.point.y, message.point.z = map(float, results[0][2].point)
         poses = PoseArray(header=header)
-        for _, _, result in results:
+        for _, _, result, _ in results:
             from geometry_msgs.msg import Pose
             pose = Pose()
             poses.poses.append(pose)
@@ -173,11 +203,12 @@ class RimNode(Node):
                     "xyz": [float(v) for v in result.point],
                     "rpy": [float(v) for v in result.rpy],
                     "candidate_count": len(result.candidates),
+                    "grasp_candidate_count": len(candidates),
                     "local_count": len(result.local_points),
                     "geometry": result.diagnostics}
-                   for distance, object_id, result in results]
+                   for distance, object_id, result, candidates in results]
         self.publisher.publish(message)
-        self.report("success", source_stamp_ns=stamp.sec*1_000_000_000+stamp.nanosec, object_count=len(results), objects=objects, rejected=rejected,
+        self.report("success", source_stamp_ns=stamp_ns, object_count=len(results), objects=objects, rejected=rejected,
                     ordered_object_ids=[x[1] for x in results])
 
 

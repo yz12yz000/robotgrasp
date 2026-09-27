@@ -228,11 +228,13 @@ def _fit_wall(local, point, outward, radius, config):
                               wall_tilt_deg=math.degrees(math.asin(abs(normal[2]))))
 
 
-def _search_wall(points, result, config):
+def _supported_walls(points, result, config):
+    """Yield one supported fit per observed contact, preserving search order."""
     centre = np.median(points, axis=0)
     rejected = Counter()
     first_reason = None
     attempts = 0
+    found = False
     for point, local_rim in _rim_contacts(result, config):
         attempts += 1
         try:
@@ -255,6 +257,7 @@ def _search_wall(points, result, config):
             except ValueError as exc:
                 rejected[str(exc)] += 1
                 first_reason = first_reason or str(exc)
+        supported = None
         for index, fit in enumerate(fits):
             for other in fits[index + 1:]:
                 change = math.degrees(math.acos(float(np.clip(np.dot(fit[0], other[0]), -1., 1.))))
@@ -266,27 +269,35 @@ def _search_wall(points, result, config):
                                        corroborating_count=len(other[1]),
                                        normal_change_deg=change, searched_contacts=attempts,
                                        rejected_neighborhoods=dict(rejected), method='supported_wall_search')
-                    return point, fit[0], local_rim, fit[1], diagnostics
+                    supported = (point, fit[0], local_rim, fit[1], diagnostics)
+                    break
+            if supported is not None:
+                break
+        if supported is not None:
+            found = True
+            yield supported
+            continue
         if len(fits) >= 2:
             rejected['pose_not_found:unstable_wall_normal'] += 1
             first_reason = first_reason or 'pose_not_found:unstable_wall_normal'
         elif fits:
             rejected['pose_not_found:uncorroborated_wall_normal'] += 1
             first_reason = first_reason or 'pose_not_found:uncorroborated_wall_normal'
+    if found:
+        return
     primary_reason = rejected.most_common(1)[0][0] if rejected else 'pose_not_found:no_supported_contact'
     raise PoseNotFound(primary_reason,
                        dict(searched_contacts=attempts, rejected_neighborhoods=dict(rejected),
                             first_rejection=first_reason))
 
 
-def locate_grasp_pose(points, config):
-    """Return exactly one supported geometry-derived PoseResult for one bowl."""
-    points = filter_component(points, config)
-    result = _locate_filtered_rim(points, config)
-    wall_points, diagnostics = np.empty((0, 3)), {}
-    local_points = result.local_points
+def _search_wall(points, result, config):
+    """Compatibility API: the original first supported contact and evidence."""
+    return next(_supported_walls(points, result, config))
+
+
+def _make_pose_result(point, normal, local_points, wall_points, diagnostics, result, config):
     if config.orientation_mode == 'wall_normal':
-        point, normal, local_points, wall_points, diagnostics = _search_wall(points, result, config)
         diagnostics['measured_wall_normal'] = normal.tolist()
         if config.max_tool_tilt_deg is not None:
             # Wall evidence validates the contact, but pinching the rim from
@@ -299,9 +310,6 @@ def locate_grasp_pose(points, config):
             horizontal = normal[:2] / np.linalg.norm(normal[:2])
             normal = np.r_[horizontal * math.cos(tilt), math.sin(tilt)]
         diagnostics['tool_tilt_deg'] = math.degrees(math.asin(abs(float(normal[2]))))
-    else:
-        point = _contact(local_points)
-        normal = _outward(point, np.median(points, axis=0))
     # Confirmed physical convention: tool Y closes across the wall, tool Z
     # points down along the wall. Translation remains along base Z.
     y_axis = normal
@@ -315,3 +323,44 @@ def locate_grasp_pose(points, config):
     q = _quaternion_from_matrix(np.column_stack((x_axis, y_axis, z_axis)))
     return PoseResult(point, q, quaternion_to_rpy(q), result.z_top,
                       result.candidates, local_points, normal, wall_points, diagnostics)
+
+
+def _grasp_candidates(points, config):
+    points = filter_component(points, config)
+    result = _locate_filtered_rim(points, config)
+    if config.orientation_mode == 'wall_normal':
+        contacts = _supported_walls(points, result, config)
+    else:
+        centre = np.median(points, axis=0)
+
+        def vertical_contacts():
+            for index, (point, local) in enumerate(_rim_contacts(result, config)):
+                try:
+                    normal = _outward(point, centre)
+                except ValueError:
+                    if index == 0:
+                        raise  # Keep the old vertical-mode rejection behavior.
+                    continue
+                yield point, normal, local, np.empty((0, 3)), {}
+
+        contacts = vertical_contacts()
+    accepted = []
+    for point, normal, local, wall, diagnostics in contacts:
+        # Stable spatial deduplication never displaces the first accepted pose.
+        if any(np.linalg.norm(point - previous) < config.candidate_min_separation for previous in accepted):
+            continue
+        candidate = _make_pose_result(point, normal, local, wall, diagnostics, result, config)
+        accepted.append(point)
+        yield candidate
+        if len(accepted) >= config.max_grasp_candidates:
+            return
+
+
+def locate_grasp_candidates(points, config):
+    """Return bounded, distinct observed grasps for one bowl in original order."""
+    return list(_grasp_candidates(points, config))
+
+
+def locate_grasp_pose(points, config):
+    """Return the historical first candidate, retaining the single-pose API."""
+    return next(_grasp_candidates(points, config))

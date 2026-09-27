@@ -108,8 +108,11 @@ class HardwareInterfaces:
     def begin_batch(self):
         self.arm.begin_batch()
 
-    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None):
-        return self.arm.prepare_plans(approach, grasp, place_ready, place_drop, place_retreat)
+    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None, *, deadline=None):
+        return self.arm.prepare_plans(approach, grasp, place_ready, place_drop, place_retreat, deadline=deadline)
+
+    def discard_prepared_plans(self):
+        self.arm.discard_prepared_plans()
 
     def resolve_place_pose(self):
         resolver = getattr(self.arm, "resolve_place_pose", None)

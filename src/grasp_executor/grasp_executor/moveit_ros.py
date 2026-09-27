@@ -18,6 +18,7 @@ from .cartesian import multiply, normalized, pose_error, rotate, tool_target_to_
 from .grasp import Pose, check_workspace
 from .trajectory import samples, seconds, slow_down, validate_trajectory
 from .ik_angles import nearest_equivalent_angles, revolute_bounds
+from .planning_errors import CandidatePlanRejected
 
 
 JOINTS = ("shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
@@ -59,7 +60,7 @@ class MoveItArm:
         self.joint_received = 0.0
         self.subscription = node.create_subscription(JointState, "/joint_states", self._joint, qos_profile_sensor_data)
         retained = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        self.display = node.create_publisher(DisplayTrajectory, "/display_planned_path", retained)
+        self.display = node.create_publisher(DisplayTrajectory, config.task_preview_topic, retained)
         self.program = None
         self.safety = None
         self.robot_mode = None
@@ -413,7 +414,10 @@ class MoveItArm:
             ik.ik_request.timeout.sec, ik.ik_request.timeout.nanosec = divmod(round(duration*1e9), 10**9)
             solved = self._call(GetPositionIK, '/compute_ik', ik, deadline)
             if solved.error_code.val != 1:
-                errors.append(f'approach_ik_failed:{solved.error_code.val}')
+                reason = f'approach_ik_failed:{solved.error_code.val}'
+                if solved.error_code.val not in (-31, -12, -14):
+                    raise RuntimeError(reason)
+                errors.append(reason)
                 continue
             raw = dict(zip(solved.solution.joint_state.name, solved.solution.joint_state.position))
             if any(j not in raw or not math.isfinite(raw[j]) for j in JOINTS):
@@ -443,7 +447,8 @@ class MoveItArm:
                                    equivalent_turns={j: round((solution[j]-raw[j])/math.tau)
                                        for j in JOINTS if abs(solution[j]-raw[j]) > 1e-8}))
         if not candidates:
-            raise RuntimeError(errors[-1] if errors else 'approach_ik_failed:no_valid_solution')
+            raise CandidatePlanRejected(errors[-1] if errors else 'approach_ik_failed:no_valid_solution',
+                                        stage='approach_ik', reasons=errors)
         candidates.sort(key=lambda c: (c['cost'], c['positions']))
         self.node.get_logger().info('ik_candidates: ' + str([
             {k:v for k,v in c.items() if k != 'positions'} for c in candidates]))
@@ -455,6 +460,7 @@ class MoveItArm:
         from moveit_msgs.srv import GetMotionPlan, GetStateValidity
         candidates = self._ik_solutions(start, goal, deadline)
         failures = []
+        failure_stage = 'pose_plan'
         for index, candidate in enumerate(candidates[:self.config.max_ik_plans]):
             self._check_cancel()
             request = GetMotionPlan.Request()
@@ -477,9 +483,13 @@ class MoveItArm:
                 setattr(plan.workspace_parameters.max_corner, k, self.config.workspace_max[k])
             response = self._call(GetMotionPlan, '/plan_kinematic_path', request, deadline).motion_plan_response
             if response.error_code.val != 1:
+                if response.error_code.val not in (-1, -12, -14, -31):
+                    raise RuntimeError(f'approach_planning_failed:{response.error_code.val}')
                 validity = self._call(GetStateValidity, '/check_state_validity',
                     GetStateValidity.Request(robot_state=start, group_name=''), deadline)
                 contacts = ','.join(f'{c.contact_body_1}/{c.contact_body_2}' for c in validity.contacts[:3])
+                if not validity.valid:
+                    raise RuntimeError('planning_start_invalid:' + contacts)
                 reason = (f'approach_planning_failed:{response.error_code.val}:candidate={index}'
                           f':start_valid={validity.valid}:max_joint_delta={candidate["max_delta"]:.3f}'
                           + (':' + contacts if contacts else ''))
@@ -490,7 +500,8 @@ class MoveItArm:
                     # A rejected path never becomes executable. Try another IK
                     # branch only for geometric/trajectory validation failures.
                     reason = str(exc)
-                    if not reason.startswith(('motion_timeout_too_short_for_trajectory',
+                    failure_stage = getattr(exc, 'stage', 'pose_plan')
+                    if not isinstance(exc, CandidatePlanRejected) and not reason.startswith(('motion_timeout_too_short_for_trajectory',
                         'collision_or_invalid_state', 'trajectory_joint_limit',
                         'planned_endpoint_mismatch', 'trajectory_validation_sample_limit',
                         'cartesian_path_incomplete', 'cartesian_joint_jump',
@@ -498,7 +509,7 @@ class MoveItArm:
                         raise
             failures.append(reason)
             self.node.get_logger().warning(reason)
-        raise RuntimeError(';'.join(failures))
+        raise CandidatePlanRejected(';'.join(failures), stage=failure_stage, reasons=failures)
 
     def _linear_plan(self, start, goal, deadline):
         from moveit_msgs.srv import GetCartesianPath
@@ -510,8 +521,13 @@ class MoveItArm:
         request.max_step, request.jump_threshold = self.config.cartesian_step, self.config.jump_threshold
         request.avoid_collisions = True
         result = self._call(GetCartesianPath, '/compute_cartesian_path', request, deadline)
-        if result.error_code.val != 1 or not math.isfinite(result.fraction) or abs(result.fraction - 1.0) > 1e-9:
-            raise RuntimeError(f"cartesian_path_incomplete:fraction={result.fraction},code={result.error_code.val}")
+        if result.error_code.val not in (1, -1, -12, -14, -31):
+            raise RuntimeError(f"cartesian_service_failed:code={result.error_code.val}")
+        if not math.isfinite(result.fraction) or not 0 <= result.fraction <= 1:
+            raise RuntimeError(f"invalid_cartesian_fraction:{result.fraction}")
+        if result.error_code.val != 1 or abs(result.fraction - 1.0) > 1e-9:
+            raise CandidatePlanRejected(f"cartesian_path_incomplete:fraction={result.fraction},code={result.error_code.val}",
+                                        stage="cartesian")
         return result.solution
 
     def _validate_and_time(self, name, trajectory, start, goal, linear, deadline):
@@ -521,7 +537,7 @@ class MoveItArm:
             raise RuntimeError("planner_changed_start_state")
         if linear and any(max(abs(x-y) for x, y in zip(a.positions, b.positions)) > self.config.max_joint_step
                           for a, b in zip(joint.points, joint.points[1:])):
-            raise RuntimeError("cartesian_joint_jump")
+            raise CandidatePlanRejected("cartesian_joint_jump", stage=name)
         sample_list = samples(trajectory, self.config)
         factor, previous, initial_pose = 1.0, None, None
         positions = []
@@ -530,13 +546,21 @@ class MoveItArm:
             for j, value, velocity, acceleration in zip(joint.joint_names, q, v, acc):
                 low, high, max_velocity = self.joint_limits[j]
                 if not all(math.isfinite(x) for x in (value, velocity, acceleration)) or not low <= value <= high:
-                    raise RuntimeError("trajectory_joint_limit:" + j)
+                    raise CandidatePlanRejected("trajectory_joint_limit:" + j, stage=name)
                 factor = max(factor, abs(velocity)/max_velocity,
                              math.sqrt(abs(acceleration)/self.config.max_joint_acceleration))
             state = self._state_at(start, joint.joint_names, q)
-            self._valid(state, deadline)
+            try:
+                self._valid(state, deadline)
+            except RuntimeError as exc:
+                if not str(exc).startswith("collision_or_invalid_state:"):
+                    raise
+                raise CandidatePlanRejected(str(exc), stage=name) from exc
             pose = self._fk(state, deadline)
-            check_workspace(pose, self.config)
+            try:
+                check_workspace(pose, self.config)
+            except ValueError as exc:
+                raise CandidatePlanRejected(str(exc), stage=name) from exc
             if initial_pose is None:
                 initial_pose = pose
             if linear:
@@ -544,7 +568,7 @@ class MoveItArm:
                         or pose_error(pose, goal)[1] > self.config.orientation_tolerance
                         or not min(initial_pose.position[2], goal.position[2]) - self.config.position_tolerance <=
                         pose.position[2] <= max(initial_pose.position[2], goal.position[2]) + self.config.position_tolerance):
-                    raise RuntimeError("cartesian_path_deviates_from_vertical")
+                    raise CandidatePlanRejected("cartesian_path_deviates_from_vertical", stage=name)
             if previous is not None:
                 old_t, old_pose = previous
                 distance, angle = pose_error(pose, old_pose)
@@ -554,11 +578,11 @@ class MoveItArm:
             positions.append(q)
         endpoint_distance, endpoint_angle = pose_error(previous[1], goal)
         if endpoint_distance > self.config.position_tolerance or endpoint_angle > self.config.orientation_tolerance:
-            raise RuntimeError(f"planned_endpoint_mismatch:position={endpoint_distance:.6f}m:angle={endpoint_angle:.6f}rad")
+            raise CandidatePlanRejected(f"planned_endpoint_mismatch:position={endpoint_distance:.6f}m:angle={endpoint_angle:.6f}rad", stage=name)
         timed = slow_down(trajectory, max(1.0, factor * 1.05))
         if seconds(timed.joint_trajectory.points[-1].time_from_start) + self.config.settle_time >= self.config.motion_timeout:
-            raise RuntimeError(f"motion_timeout_too_short_for_trajectory:{name}:"
-                               f"duration={seconds(timed.joint_trajectory.points[-1].time_from_start):.2f}s,scale={factor:.2f}")
+            raise CandidatePlanRejected(f"motion_timeout_too_short_for_trajectory:{name}:"
+                                        f"duration={seconds(timed.joint_trajectory.points[-1].time_from_start):.2f}s,scale={factor:.2f}", stage=name)
         return Segment(name, timed, deepcopy(start), goal, linear, positions)
 
     def end_batch(self):
@@ -569,14 +593,36 @@ class MoveItArm:
         # measured joints after the preceding object's retreat completes.
         self.preview_state = None
 
-    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None):
+    def discard_prepared_plans(self):
+        """Invalidate stale/late plans, without cancelling an active robot action."""
+        with self.lock:
+            if getattr(self, 'active', None) is not None:
+                result = getattr(self, 'result_future', None)
+                if result is None or not result.done():
+                    raise RuntimeError("cannot_discard_active_trajectory")
+                self.active = None
+            self._plan_generation = getattr(self, '_plan_generation', 0) + 1
+            self.plans, self.next_segment = [], 0
+
+    def prepare_plans(self, approach, grasp, place_ready=None, place_drop=None, place_retreat=None, *, deadline=None):
         from moveit_msgs.msg import DisplayTrajectory
-        deadline = time.monotonic() + self.config.planning_timeout
+        limit = deadline if deadline is not None else math.inf
+
+        def segment_deadline():
+            self._check_cancel()
+            if time.monotonic() >= limit:
+                raise TimeoutError("candidate_planning_deadline")
+            return min(limit, time.monotonic() + self.config.planning_timeout)
+
+        self.discard_prepared_plans()
+        generation = self._plan_generation
+        deadline = segment_deadline()
         self._scene(deadline)
         actual_start = self._state(stationary=True)
         start = (deepcopy(self.preview_state) if self.config.plan_only
                  and getattr(self, "preview_state", None) is not None else actual_start)
         original = deepcopy(start)
+        # An invalid measured/virtual start is fatal, not a rejected contact.
         self._valid(start, deadline)
         plans = []
         groups = [[('approach', approach), ('descend', grasp), ('lift', approach)]]
@@ -586,33 +632,41 @@ class MoveItArm:
             groups.append([('place_ready', place_ready), ('place_drop', place_drop),
                            ('place_retreat', place_retreat or place_ready)])
         for goals in groups:
-            self._check_cancel()
-            deadline = time.monotonic() + self.config.planning_timeout
+            deadline = segment_deadline()
             name, goal = goals[0]
 
             def validate_triplet(trajectory):
-                # An approach IK branch is useful only if it can also descend
-                # and retreat. Commit none of this candidate until all pass.
                 triplet = [self._validate_and_time(name, trajectory, start, goal, False, deadline)]
                 candidate_start = start
                 for next_name, next_goal in goals[1:]:
                     joint = triplet[-1].trajectory.joint_trajectory
                     candidate_start = self._state_at(candidate_start, joint.joint_names, joint.points[-1].positions)
-                    path = self._linear_plan(candidate_start, next_goal, deadline)
-                    triplet.append(self._validate_and_time(next_name, path, candidate_start, next_goal, True, deadline))
+                    try:
+                        path = self._linear_plan(candidate_start, next_goal, deadline)
+                        triplet.append(self._validate_and_time(next_name, path, candidate_start, next_goal, True, deadline))
+                    except CandidatePlanRejected as exc:
+                        raise CandidatePlanRejected(str(exc), stage=next_name, reasons=exc.reasons) from exc
                 return triplet
 
-            triplet = self._pose_plan(start, goal, deadline, validate=validate_triplet)
+            try:
+                triplet = self._pose_plan(start, goal, deadline, validate=validate_triplet)
+            except CandidatePlanRejected as exc:
+                if exc.stage in ('planning', 'pose_plan', 'approach_ik'):
+                    raise CandidatePlanRejected(str(exc), stage=name, reasons=exc.reasons) from exc
+                raise
             plans.extend(triplet)
             joint = triplet[-1].trajectory.joint_trajectory
             start = self._state_at(start, joint.joint_names, joint.points[-1].positions)
-        self._check_cancel()
-        first = plans[0].trajectory.joint_trajectory
+        segment_deadline()
         if self._joint_error(self._state(stationary=True), actual_start.joint_state.name, actual_start.joint_state.position) > self.config.start_joint_tolerance:
             raise RuntimeError("robot_moved_during_planning")
-        if self.config.plan_only and hasattr(self, "preview_state"):
-            self.preview_state = deepcopy(start)
-        self.plans, self.next_segment = plans, 0
+        with self.lock:
+            segment_deadline()
+            if generation != self._plan_generation:
+                raise RuntimeError("planning_generation_invalidated")
+            if self.config.plan_only and hasattr(self, "preview_state"):
+                self.preview_state = deepcopy(start)
+            self.plans, self.next_segment = plans, 0
         display = DisplayTrajectory(model_id=self.model_id, trajectory_start=original,
                                     trajectory=[p.trajectory for p in plans])
         self.display.publish(display)

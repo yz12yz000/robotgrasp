@@ -46,7 +46,162 @@ from grasp_executor.scene_cleanup import scene_request, has_legacy_objects
 from grasp_executor.moveit_ros import MoveItArm, JOINTS
 
 
-def main():
+def check_candidate_rounds(node, preview_arm, execution_arm, fake_gripper, positions,
+                           initial_positions, bowls, fake_goals, directory):
+    """Use actual MoveIt rejection/planning with only simulated controller actions."""
+    from copy import deepcopy
+    import numpy as np
+    from grasp_executor.candidates import run_candidate_group_task
+    from grasp_executor.interfaces import HardwareInterfaces
+    from grasp_executor.planning_errors import CandidatePlanRejected
+
+    journal = directory / 'candidate_journal'
+    task_id = 'isolated_moveit_candidates'
+    unreachable = replace(bowls[0], position=(1.4, 1.4, 1.3))
+    also_unreachable = replace(bowls[0], position=(1.35, 1.4, 1.3))
+
+    def group(object_id, poses):
+        return {'object_id': object_id, 'distance': math.hypot(*poses[0].position[:2]),
+                'candidates': [{'candidate_id': index,
+                    'position': [float(value) for value in pose.position],
+                    'orientation': [float(value) for value in pose.orientation],
+                    'geometry': {'method': 'synthetic_moveit_fixture'}}
+                    for index, pose in enumerate(poses)]}
+
+    def batch(observation_id, groups):
+        return {'schema_version': 1, 'task_id': task_id, 'observation_id': observation_id,
+                'source_stamp_ns': node.get_clock().now().nanoseconds,
+                'frame_id': 'base_link', 'tool_frame': 'grasp_center',
+                'objects': groups, 'rejected': []}
+
+    def state_positions(state):
+        joint = state.joint_state
+        return [joint.position[joint.name.index(name)] for name in JOINTS]
+
+    def record_plans(adapter):
+        records = []
+        original = adapter.prepare_plans
+        def capture(*args, **kwargs):
+            start = (deepcopy(adapter.preview_state) if adapter.config.plan_only
+                     and getattr(adapter, 'preview_state', None) is not None
+                     else adapter._state(stationary=True))
+            entry = {'start': state_positions(start), 'grasp': args[1], 'rejected': False,
+                     'measured_start': state_positions(adapter._state(stationary=True)),
+                     'actions_before': len(fake_goals), 'gripper_before': len(fake_gripper.commands)}
+            records.append(entry)
+            try:
+                return original(*args, **kwargs)
+            except CandidatePlanRejected:
+                entry['rejected'] = True
+                raise
+            except Exception as exc:
+                print('Candidate integration planning failure:', str(exc),
+                      'measured before:', entry['measured_start'],
+                      'measured after:', state_positions(adapter._state(stationary=True)),
+                      'synthetic feedback:', list(positions),
+                      'action count:', entry['actions_before'], len(fake_goals), flush=True)
+                raise
+            finally:
+                entry['plans'] = deepcopy(adapter.plans)
+                entry['actions_after'] = len(fake_goals)
+                entry['gripper_after'] = len(fake_gripper.commands)
+        adapter.prepare_plans = capture
+        return records, original
+
+    def run(payload, adapter, events, source_not_before_ns=0):
+        return run_candidate_group_task(payload, lambda: node.get_clock().now().nanoseconds,
+            HardwareInterfaces(adapter, fake_gripper), adapter.config,
+            expected_task_id=task_id, expected_observation_id=payload['observation_id'],
+            source_not_before_ns=source_not_before_ns,
+            task_deadline_monotonic_ns=time.monotonic_ns() + 240_000_000_000,
+            on_state=lambda value: events.append(deepcopy(value)), cancel=adapter.cancel)
+
+    execution_arm.close()
+    positions[:] = initial_positions
+    time.sleep(.4)
+    preview_arm.config = replace(preview_arm.config, plan_only=True, execution_journal=str(journal))
+    previews, original_preview = record_plans(preview_arm)
+    executions, original_execution = record_plans(execution_arm)
+    try:
+        goals_before, commands_before = len(fake_goals), len(fake_gripper.commands)
+        preview_batch = batch('preview_two_objects', [group(2, [bowls[0]]),
+                                                       group(7, [unreachable, bowls[1]])])
+        result = run(preview_batch, preview_arm, [])
+        assert result.status == 'planned' and result.object_count == 2, result
+        assert result.completed_count == 0 and result.candidate_attempt_count == 3
+        assert len(result.candidate_failures) == 1 and result.candidate_id == 1
+        assert [entry['rejected'] for entry in previews] == [False, True, False]
+        assert not previews[1]['plans']  # Failed candidate never exposes previous successful plans.
+        previous_end = list(previews[0]['plans'][-1].trajectory.joint_trajectory.points[-1].positions)
+        np.testing.assert_allclose(previews[1]['start'], previous_end, atol=1e-8)
+        np.testing.assert_allclose(previews[2]['start'], previous_end, atol=1e-8)
+        assert len(previews[0]['plans']) == len(previews[2]['plans']) == 6
+        assert len(fake_goals) == goals_before and len(fake_gripper.commands) == commands_before
+        assert not journal.exists() and preview_arm.preview_state is None
+        print('PASS grouped preview: real unreachable contact falls back from same virtual start, no commands', flush=True)
+
+        preview_arm.close()
+        execution_arm.config = replace(execution_arm.config, plan_only=False, execution_journal=str(journal))
+        exhausted_batch = batch('all_candidates_unreachable', [group(7, [unreachable, also_unreachable])])
+        result = run(exhausted_batch, execution_arm, [])
+        assert result.status == 'candidates_exhausted' and result.candidate_attempt_count == 2, result
+        assert result.command_attempted is False and result.completed_count == 0
+        assert len(result.candidate_failures) == 2
+        assert len(executions) == 2 and all(entry['rejected'] for entry in executions)
+        assert not execution_arm.plans
+        assert len(fake_goals) == goals_before and len(fake_gripper.commands) == commands_before
+        assert not journal.exists()
+        print('PASS execute mode: two real unreachable candidates exhaust without arm/gripper commands or stale plans', flush=True)
+        executions.clear()
+
+        first_start = list(positions)
+        events = []
+        first = batch('execute_round_0001', [group(7, [unreachable, bowls[0]])])
+        result = run(first, execution_arm, events)
+        assert result.status == 'success' and result.completed_count == 1, result
+        assert result.candidate_attempt_count == 2 and result.candidate_id == 1
+        assert len(result.candidate_failures) == 1
+        assert len(fake_goals) - goals_before == 6
+        assert fake_gripper.commands[commands_before:] == ['Open', 'Close', 'Open']
+        assert any(event['status'] == 'candidate_rejected' and event['command_attempted'] is False
+                   for event in events)
+        np.testing.assert_allclose(executions[0]['start'], first_start, atol=1e-8)
+        np.testing.assert_allclose(executions[1]['start'], first_start, atol=1e-8)
+        assert not executions[0]['plans']
+        assert executions[0]['actions_before'] == executions[0]['actions_after'] == goals_before
+        assert executions[0]['gripper_before'] == executions[0]['gripper_after'] == commands_before
+        assert len(list(journal.glob('*.json'))) == 1
+        print('PASS grouped execution: unreachable candidate sends no commands; fallback executes exactly six simulated segments', flush=True)
+
+        # A new observation reuses the frame-local ID, changes its target, and
+        # plans from the newly measured post-retreat joints, not the first start.
+        time.sleep(.3)
+        second_start = list(positions)
+        assert not np.allclose(first_start, second_start, atol=1e-3)
+        barrier = node.get_clock().now().nanoseconds
+        second = batch('execute_round_0002', [group(7, [bowls[1]])])
+        assert second['source_stamp_ns'] > barrier > first['source_stamp_ns']
+        result = run(second, execution_arm, [], source_not_before_ns=barrier)
+        assert result.status == 'success' and result.completed_count == 1, result
+        assert result.candidate_attempt_count == 1
+        np.testing.assert_allclose(executions[2]['start'], second_start, atol=1e-8)
+        assert executions[2]['grasp'] != executions[1]['grasp']
+        assert len(fake_goals) - goals_before == 12
+        assert fake_gripper.commands[commands_before:] == ['Open', 'Close', 'Open'] * 2
+        assert len(list(journal.glob('*.json'))) == 2
+        print('PASS new observation: reused local ID and new pose plan from fresh post-retreat measured joints', flush=True)
+        return {'preview_candidate_attempts': 3, 'exhausted_candidate_attempts': 2,
+                'executed_objects': 2, 'executed_segments': 12, 'journal_records': 2,
+                'fresh_measured_start_verified': True, 'exhausted_in_execute_mode': True,
+                'hardware_connected': False}
+    finally:
+        preview_arm.prepare_plans = original_preview
+        execution_arm.prepare_plans = original_execution
+        preview_arm.close()
+        execution_arm.close()
+
+
+def _main_locked():
     directory = Path(tempfile.mkdtemp(prefix='moveit-grasp-test-'))
     print('Test logs:', directory, 'ROS_DOMAIN_ID:', os.environ['ROS_DOMAIN_ID'], flush=True)
     processes, logs = [], []
@@ -273,8 +428,8 @@ def main():
         arm.close()  # Release the execution lock before preview reserves it.
         captured, batch_previews = [], []
         original_prepare = preview_arm.prepare_plans
-        def capture(*args):
-            ok = original_prepare(*args)
+        def capture(*args, **kwargs):
+            ok = original_prepare(*args, **kwargs)
             captured.append(deepcopy(preview_arm.plans))
             return ok
         preview_arm.prepare_plans = capture
@@ -309,6 +464,9 @@ def main():
         assert len(fake_goals)-goals_before == 18
         assert fake_gripper.commands[commands_before:] == ['Open','Close','Open']*3
         print('PASS three-object simulated execution: 18 segments, three releases/returns', flush=True)
+        preview_arm.prepare_plans = original_prepare
+        candidate_checks = check_candidate_rounds(node, preview_arm, arm, fake_gripper,
+            positions, initial_positions, batch, fake_goals, directory)
         # Reset synthetic feedback and use preview mode again for rejection tests.
         arm.close()
         arm = preview_arm
@@ -351,10 +509,11 @@ def main():
             print('PASS real collision rejection:', exc, flush=True)
         else: raise AssertionError('Colliding start unexpectedly accepted')
         assert not arm.commanded
-        (directory/'result.json').write_text(json.dumps({'passed':11,'hardware_connected':False,
+        (directory/'result.json').write_text(json.dumps({'passed':15,'hardware_connected':False,
             'domain':os.environ['ROS_DOMAIN_ID'], 'batch_grasp_offset':batch_offset,
-            'offset_preview_matches_execution':True, 'object_count':3, 'executed_segments':18}))
-        print('11 MoveIt integration checks passed; hardware was not connected.', flush=True)
+            'offset_preview_matches_execution':True, 'object_count':3, 'executed_segments':18,
+            'candidate_rounds':candidate_checks}))
+        print('15 MoveIt integration checks passed; hardware was not connected.', flush=True)
     finally:
         if arm: arm.close()
         executor.shutdown(timeout_sec=2)
@@ -369,6 +528,15 @@ def main():
                 os.killpg(p.pid, signal.SIGKILL)
                 p.wait(timeout=2)
         for output in logs: output.close()
+
+
+def main():
+    # Independent empty-domain probes can race or discover other RMWs late.
+    # Hold the common fixture lock from before rclpy.init until all nodes and
+    # child processes have been cleaned up, including startup exceptions.
+    from isolated_ros import IsolatedRosTestLock
+    with IsolatedRosTestLock():
+        return _main_locked()
 
 
 if __name__ == '__main__':

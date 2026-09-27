@@ -12,6 +12,7 @@ from yolo_vision import pointcloud
 from yolo_vision.sensor_input import SerializedSensor
 from rim_locator.main import RimNode
 from rim_locator.config import RimConfig
+from rim_locator.candidate_protocol import decode_candidate_batch
 from grasp_executor.main import GraspNode
 from grasp_executor.config import GraspConfig
 from grasp_executor.grasp import run_batch_task
@@ -55,21 +56,35 @@ def test_observe_localize_grasp_and_place_all(monkeypatch,tmp_path,count,execute
                  SerializedSensor(serialize_message(cloud),type(cloud)))
     monkeypatch.setattr(time, 'monotonic', real_monotonic)
     assert node.reports[-1]['detected_count']==count
-    arrays=[]
+    arrays, candidate_batches = [], []
     class Locator:
         on_cloud=RimNode.on_cloud
         finish=RimNode.finish
         def report(self,state,**kw): self.state=state;self.result=kw
     locator=Locator();locator.state='waiting_input';locator.config=RimConfig(orientation_mode='wall_normal',publish_debug=False)
     locator.poses_publisher=NS(publish=arrays.append);locator.publisher=NS(publish=lambda m:None)
+    locator.task_id, locator.observation_id = 'test', 'test/round_0001'
+    locator.candidates_publisher = NS(publish=candidate_batches.append)
     if count:
         assert node.state=='success' and len(node.messages)==1
         locator.on_cloud(node.messages[0])
         assert locator.state=='success'
         assert len(arrays)==1 and arrays[0].header.stamp==header.stamp
         assert len(arrays[0].poses)==count
+        assert len(candidate_batches) == 1
+        batch = decode_candidate_batch(candidate_batches[0].data,
+            expected_task_id=locator.task_id, expected_observation_id=locator.observation_id)
+        assert batch['source_stamp_ns'] == 99_000_000_042
+        assert len(batch['objects']) == count and not batch['rejected']
+        assert [group['object_id'] for group in batch['objects']] == locator.result['ordered_object_ids']
+        for group, pose in zip(batch['objects'], arrays[0].poses):
+            assert 1 < len(group['candidates']) <= locator.config.max_grasp_candidates
+            first = group['candidates'][0]
+            assert first['position'] == pytest.approx([pose.position.x, pose.position.y, pose.position.z])
+            assert first['orientation'] == pytest.approx([
+                pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w])
     else:
-        assert node.state=='no_targets' and not node.messages
+        assert node.state=='no_targets' and not node.messages and not candidate_batches
     config=GraspConfig(plan_only=not execute,place_dwell_time=.001,execution_journal=str(tmp_path))
     poses=[GraspNode.grasp_pose_from_ros(p,config) for p in arrays[0].poses] if count else []
     arm=Arm()

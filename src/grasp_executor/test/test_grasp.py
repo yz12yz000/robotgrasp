@@ -172,8 +172,10 @@ def test_partial_cartesian_path_rejected(fraction, code):
         assert req.link_name == 'tool0'
         return NS(error_code=NS(val=code), fraction=fraction)
     a._call = call
-    with pytest.raises(RuntimeError, match='cartesian_path_incomplete'):
+    with pytest.raises(RuntimeError, match='invalid_cartesian_fraction' if not math.isfinite(fraction) else 'cartesian_path_incomplete') as raised:
         a._linear_plan(RobotState(), build_grasp_pose((.4, .1, .2), a.config), time.monotonic()+1)
+    from grasp_executor.planning_errors import CandidatePlanRejected
+    assert isinstance(raised.value, CandidatePlanRejected) == math.isfinite(fraction)
 
 
 def completed(value):

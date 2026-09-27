@@ -20,7 +20,7 @@ class GraspConfig:
     input_topic: str = "/rim_locator/rim_point"
     base_frame: str = "base_link"
     grasp_offset: dict = field(default_factory=lambda: dict(x=0.0, y=0.0, z=0.0))
-    approach_height: float = 0.15
+    approach_height: float = 0.10
     fixed_orientation: dict = field(default_factory=lambda: dict(x=0.0, y=1.0, z=0.0, w=0.0))
     motion_timeout: float = 90.0
     gripper_timeout: float = 5.0
@@ -74,6 +74,7 @@ class GraspConfig:
     start_joint_tolerance: float = 0.01
     gripper_settle_time: float = 1.0
     input_mode: str = "point"
+    task_preview_topic: str = "/display_planned_path"
     place_ready_position: dict = field(default_factory=lambda: dict(x=0.388824983, y=0.389889715, z=0.258283462))
     place_ready_orientation: dict = field(default_factory=lambda: dict(x=-0.001843561, y=0.999969986,
                                                                         z=-0.002705731, w=-0.007021887))
@@ -94,13 +95,13 @@ class GraspConfig:
             raise ValueError('invalid_config:ik_timeout')
         for name in ("input_topic", "base_frame", "tool_frame", "hand_control_setup", "execution_journal",
                      "controller_name", "controller_manager", "controller_tip_frame", "move_group",
-                     "planning_link", "move_group_node", "planner_id"):
+                     "planning_link", "move_group_node", "planner_id", "task_preview_topic"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"invalid_config:{name}")
         if any(getattr(self, name).startswith("/") for name in ("base_frame", "tool_frame", "controller_tip_frame")):
             raise ValueError("frame_id_must_not_start_with_slash")
-        if self.input_mode not in ("point", "pose_array"):
+        if self.input_mode not in ("point", "pose_array", "candidate_groups"):
             raise ValueError("invalid_input_mode")
         for name in ("place_reference_frame", "place_reference_child_frame"):
             value = getattr(self, name)

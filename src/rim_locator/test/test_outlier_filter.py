@@ -117,7 +117,7 @@ def test_object_ids_stamp_and_good_instance_survive_fragmented_instance():
     points = np.r_[good, bad]
     ids = np.r_[np.full(len(good), 7), np.full(len(bad), 9)]
     poses, reports = [], []
-    node = NS(config=RimConfig(orientation_mode='wall_normal', publish_debug=False),
+    node = NS(candidates_publisher=NS(publish=lambda message: None), config=RimConfig(orientation_mode='wall_normal', publish_debug=False),
               poses_publisher=NS(publish=poses.append), publisher=NS(publish=lambda m: None),
               report=lambda state, **kw: reports.append(kw))
     RimNode.finish(node, points, ids, stamp)

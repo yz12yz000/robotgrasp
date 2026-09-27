@@ -1,12 +1,12 @@
 {
-  "input_topic": "/rim_locator/grasp_poses",
+  "input_topic": "/rim_locator/grasp_candidates",
   "base_frame": "base_link",
   "grasp_offset": {
     "x": 0.0,
     "y": 0.0,
     "z": 0.0
   },
-  "approach_height": 0.15,
+  "approach_height": 0.1,
   "fixed_orientation": {
     "x": 0.0,
     "y": 1.0,
@@ -69,7 +69,7 @@
   "max_joint_acceleration": 0.3,
   "start_joint_tolerance": 0.01,
   "gripper_settle_time": 1.0,
-  "input_mode": "pose_array",
+  "input_mode": "candidate_groups",
   "place_ready_position": {
     "x": 0.388824983,
     "y": 0.389889715,
@@ -99,5 +99,6 @@
   },
   "ik_attempts": 8,
   "ik_timeout": 0.25,
-  "max_ik_plans": 3
+  "max_ik_plans": 3,
+  "task_preview_topic": "/display_planned_path"
 }

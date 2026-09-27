@@ -33,8 +33,22 @@ class VisionNode(Node):
     def __init__(self):
         super().__init__("yolo_vision")
         self.state = "initializing"
+        self.task_id = ""
+        self.observation_id = ""
+        self.source_not_before_ns = 0
         self.status_pub = self.create_publisher(String, "~/status", retained_qos())
         try:
+            self.task_id = self.declare_parameter("task_id", "").value
+            self.observation_id = self.declare_parameter("observation_id", "").value
+            self.source_not_before_ns = self.declare_parameter("source_not_before_ns", 0).value
+            for name in ("task_id", "observation_id"):
+                value = getattr(self, name)
+                if not isinstance(value, str) or (value and not value.strip()):
+                    raise ValueError("invalid_observation_parameter:" + name)
+            if bool(self.task_id) != bool(self.observation_id):
+                raise ValueError("incomplete_observation_identity")
+            if type(self.source_not_before_ns) is not int or self.source_not_before_ns < 0:
+                raise ValueError("invalid_observation_parameter:source_not_before_ns")
             share = Path(get_package_share_directory("yolo_vision"))
             path = self.declare_parameter("config_path", str(share / "config/config.json")).value
             self.config = load_config(path)
@@ -72,7 +86,10 @@ class VisionNode(Node):
 
     def report(self, status, **details):
         self.state = status
-        payload = json.dumps({"status": status, **details}, ensure_ascii=False)
+        payload = json.dumps({"status": status, **details,
+                              "task_id": self.task_id,
+                              "observation_id": self.observation_id,
+                              "source_not_before_ns": self.source_not_before_ns}, ensure_ascii=False)
         self.status_pub.publish(String(data=payload))
         self.get_logger().info(payload)
 
@@ -111,8 +128,19 @@ class VisionNode(Node):
         if self.deadline_expired():
             self.report("failed", failed_step="ready", reason="input_timeout")
             return
-        self.report("processing")  # Lock the job BEFORE any inference.
         try:
+            stamps = [m.header.stamp.sec * 1_000_000_000 + m.header.stamp.nanosec for m in (image, cloud)]
+            now_ns = self.get_clock().now().nanoseconds
+            if self.source_not_before_ns:
+                if now_ns < self.source_not_before_ns:
+                    raise ValueError("source_clock_before_observation_barrier")
+                # Ignore queued images acquired before this observation. Do
+                # not lock the one-shot node or restart its timeout for them.
+                # CameraInfo keeps the existing synchronization contract;
+                # its timestamp is not an image acquisition freshness gate.
+                if any(stamp <= self.source_not_before_ns for stamp in stamps):
+                    return
+            self.report("processing")  # Lock the job BEFORE any decoding/inference.
             if not cloud.header.frame_id.strip():
                 raise ValueError("empty_frame_id")
             shape = (image.height, image.width)
@@ -120,8 +148,6 @@ class VisionNode(Node):
                 raise ValueError("dimension_mismatch")
             if cloud.height <= 1:
                 raise ValueError("cloud_not_organized")
-            now_ns = self.get_clock().now().nanoseconds
-            stamps = [m.header.stamp.sec * 1_000_000_000 + m.header.stamp.nanosec for m in (image, cloud)]
             if image.header.frame_id != cloud.header.frame_id:
                 raise ValueError("depth_not_registered_to_rgb_frame")
             if abs(stamps[0] - stamps[1]) > self.config.sync_slop * 1e9:

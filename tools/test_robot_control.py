@@ -155,8 +155,11 @@ class ShellOwnershipTests(unittest.TestCase):
 class FakeRosTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        from isolated_ros import IsolatedRosTestLock
+        cls.test_lock = IsolatedRosTestLock()
+        cls.addClassCleanup(cls.test_lock.close)
         # Do not inherit a DDS discovery server or custom network configuration.
-        for name in ("ROS_DISCOVERY_SERVER", "FASTRTPS_DEFAULT_PROFILES_FILE", "CYCLONEDDS_URI"):
+        for name in ("ROS_DISCOVERY_SERVER", "FASTRTPS_DEFAULT_PROFILES_FILE", "FASTDDS_DEFAULT_PROFILES_FILE", "CYCLONEDDS_URI"):
             os.environ.pop(name, None)
         os.environ["ROS_LOCALHOST_ONLY"] = "1"
         os.environ["RMW_IMPLEMENTATION"] = "rmw_fastrtps_cpp"
@@ -193,6 +196,7 @@ class FakeRosTests(unittest.TestCase):
             if not occupied:
                 cls.context = context
                 os.environ["ROS_DOMAIN_ID"] = str(domain)
+                print("Isolated startup test ROS_DOMAIN_ID:", domain, flush=True)
                 break
             context.shutdown()
         else:

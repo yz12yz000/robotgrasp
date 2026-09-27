@@ -200,7 +200,7 @@ def test_batch_offset_once_in_preview_plans_and_motion(tmp_path, count, plan_onl
     assert not plan_only or not interfaces.moves
 
 
-@pytest.mark.parametrize('offset', [dict(x=2.,y=0.,z=0.), dict(x=0.,y=0.,z=1.2)])
+@pytest.mark.parametrize('offset', [dict(x=2.,y=0.,z=0.), dict(x=0.,y=0.,z=1.21)])
 def test_offset_or_approach_outside_workspace_rejected_before_planning(offset):
     config = GraspConfig(grasp_offset=offset)
     pose = Pose((.3,.1,.2),(1.,0.,0.,0.),'base_link','grasp_center')

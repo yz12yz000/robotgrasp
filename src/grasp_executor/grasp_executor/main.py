@@ -20,6 +20,9 @@ from .config import load_config
 from .grasp import (Pose as GraspPose, build_approach_pose, build_grasp_pose,
                     run_batch_task, run_task, validate_target)
 from .interfaces import create_interfaces
+from .candidates import run_candidate_group_task
+from .process_guard import supervisor_alive
+from rim_locator.candidate_protocol import decode_candidate_batch
 
 
 def retained_qos():
@@ -35,20 +38,42 @@ class GraspNode(Node):
         self.cancel = Event()
         self.worker = None
         self.interfaces = None
+        self.task_id = self.declare_parameter("task_id", "").value
+        self.observation_id = self.declare_parameter("observation_id", "").value
+        self.source_not_before_ns = self.declare_parameter("source_not_before_ns", 0).value
+        self.task_deadline_monotonic_ns = self.declare_parameter("task_deadline_monotonic_ns", 0).value
+        self.supervisor_pid = self.declare_parameter("supervisor_pid", 0).value
+        self.supervisor_start_ticks = self.declare_parameter("supervisor_start_ticks", 0).value
+        self.supervisor_lost = False
+        self.deadline_expired = False
         self.status_pub = self.create_publisher(String, "~/status", retained_qos())
         try:
             share = Path(get_package_share_directory("grasp_executor"))
             path = self.declare_parameter("config_path", str(share / "config/config.json")).value
             self.config = load_config(path)
-            self.config = replace(self.config, plan_only=self.declare_parameter("plan_only", self.config.plan_only).value)
+            self.config = replace(self.config,
+                plan_only=self.declare_parameter("plan_only", self.config.plan_only).value,
+                task_preview_topic=self.declare_parameter("task_preview_topic", self.config.task_preview_topic).value)
+            for name in ("source_not_before_ns", "task_deadline_monotonic_ns", "supervisor_pid", "supervisor_start_ticks"):
+                if type(getattr(self, name)) is not int or getattr(self, name) < 0:
+                    raise ValueError("invalid_parameter:" + name)
+            if bool(self.supervisor_pid) != bool(self.supervisor_start_ticks):
+                raise ValueError("incomplete_supervisor_identity")
+            if not supervisor_alive(self.supervisor_pid, self.supervisor_start_ticks):
+                raise RuntimeError("supervisor_lost")
+            if self.config.input_mode == "candidate_groups" and (not self.task_id or not self.observation_id):
+                raise ValueError("candidate_context_required")
             self.interfaces = create_interfaces(self.config, self)
             if self.config.publish_debug:
                 self.approach_pub = self.create_publisher(PoseStamped, "~/approach_pose", retained_qos())
                 self.grasp_pub = self.create_publisher(PoseStamped, "~/grasp_pose", retained_qos())
                 self.place_ready_pub = self.create_publisher(PoseStamped, "~/place_ready_pose", retained_qos())
                 self.place_pub = self.create_publisher(PoseStamped, "~/place_pose", retained_qos())
-            callback = self.on_pose_array if self.config.input_mode == "pose_array" else self.on_target
-            message_type = PoseArray if self.config.input_mode == "pose_array" else PointStamped
+            callback, message_type = {
+                "point": (self.on_target, PointStamped),
+                "pose_array": (self.on_pose_array, PoseArray),
+                "candidate_groups": (self.on_candidate_groups, String),
+            }[self.config.input_mode]
             self.subscription = self.create_subscription(message_type, self.config.input_topic, callback, retained_qos())
             self.wait_started = time.monotonic()
             self.timer = self.create_timer(0.05, self.tick, clock=Clock(clock_type=ClockType.STEADY_TIME))
@@ -58,7 +83,13 @@ class GraspNode(Node):
 
     def report(self, status, **details):
         self.state = status
+        details.setdefault("task_id", self.task_id)
+        details.setdefault("observation_id", self.observation_id)
         details.setdefault("backend", "moveit")
+        if self.supervisor_lost and status == "failed" and details.get("reason") == "cancelled":
+            details["reason"] = "supervisor_lost"
+        if self.deadline_expired and status == "failed" and details.get("reason") == "cancelled":
+            details["reason"] = "task_deadline_exceeded"
         details.setdefault("plan_only", self.config.plan_only if hasattr(self, "config") else True)
         if status == "success":
             details["grasp_verified"] = False
@@ -70,7 +101,26 @@ class GraspNode(Node):
         # alternating info/error calls can raise during error handling.
         self.get_logger().info(payload)
 
+    def check_supervisor(self):
+        if supervisor_alive(getattr(self, "supervisor_pid", 0), getattr(self, "supervisor_start_ticks", 0)):
+            return True
+        self.supervisor_lost = True
+        self.cancel.set()  # Existing worker performs the bounded stop procedure.
+        if self.worker is None:
+            self.report("failed", failed_step="waiting_target", reason="supervisor_lost",
+                        command_attempted=False)
+        return False
+
     def tick(self):
+        terminal = ("success", "planned", "failed", "no_targets", "candidates_exhausted")
+        if self.state not in terminal:
+            self.check_supervisor()
+        if (self.task_deadline_monotonic_ns and time.monotonic_ns() >= self.task_deadline_monotonic_ns
+                and self.state not in terminal):
+            self.deadline_expired = True
+            self.cancel.set()
+            if self.worker is None:
+                self.report("failed", failed_step="waiting_target", reason="task_deadline_exceeded")
         while True:
             try:
                 event = self.events.get_nowait()
@@ -92,6 +142,8 @@ class GraspNode(Node):
 
     def on_target(self, message):
         if self.state != "waiting_target":
+            return
+        if not GraspNode.check_supervisor(self):
             return
         self.report("validating")
         try:
@@ -121,6 +173,8 @@ class GraspNode(Node):
     def on_pose_array(self, message):
         if self.state != "waiting_target":
             return
+        if not GraspNode.check_supervisor(self):
+            return
         self.report("validating")
         try:
             stamp_ns = message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec
@@ -132,6 +186,31 @@ class GraspNode(Node):
         except Exception as exc:
             self.wait_started = time.monotonic()
             self.report("waiting_target", failed_step="validating", reason=str(exc), retry=True)
+
+    def on_candidate_groups(self, message):
+        if self.state != "waiting_target":
+            return
+        if not GraspNode.check_supervisor(self):
+            return
+        self.report("validating")
+        try:
+            batch = decode_candidate_batch(message.data, expected_task_id=self.task_id,
+                expected_observation_id=self.observation_id, expected_frame_id=self.config.base_frame,
+                expected_tool_frame=self.config.tool_frame, source_not_before_ns=self.source_not_before_ns)
+            if not self.config.plan_only and len(batch["objects"]) != 1:
+                raise ValueError("execution_requires_single_object_group")
+            self.worker = Thread(target=self.run_candidate_job, args=(batch,), daemon=True)
+            self.worker.start()
+        except Exception as exc:
+            self.report("failed", failed_step="validating", reason=str(exc), command_attempted=False)
+
+    def run_candidate_job(self, batch):
+        result = run_candidate_group_task(batch, lambda: self.get_clock().now().nanoseconds,
+            self.interfaces, self.config, on_state=self.events.put, cancel=self.cancel,
+            on_poses=self.publish_batch_poses, expected_task_id=self.task_id,
+            expected_observation_id=self.observation_id, source_not_before_ns=self.source_not_before_ns,
+            task_deadline_monotonic_ns=self.task_deadline_monotonic_ns)
+        self.events.put(asdict(result))
 
     def run_job(self, point, stamp_ns):
         result = run_task(

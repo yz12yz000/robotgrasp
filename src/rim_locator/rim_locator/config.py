@@ -11,7 +11,11 @@ class RimConfig:
     input_topic: str = "/yolo_vision/object_cloud"
     output_topic: str = "/rim_locator/rim_point"
     poses_topic: str = "/rim_locator/grasp_poses"
+    candidates_topic: str = "/rim_locator/grasp_candidates"
     target_frame: str = "base_link"
+    tool_frame: str = "grasp_center"
+    max_grasp_candidates: int = 8
+    candidate_min_separation: float = 0.004
     top_percentile: float = 98.0
     rim_height_band: float = 0.015
     near_side_ratio: float = 0.1
@@ -44,24 +48,26 @@ class RimConfig:
     max_tool_tilt_deg: float | None = None  # None follows wall; 0 is vertical rim pinch.
 
     def __post_init__(self):
+        if type(self.max_grasp_candidates) is not int or not 1 <= self.max_grasp_candidates <= 32:
+            raise ValueError("invalid_config:max_grasp_candidates")
         value = self.max_tool_tilt_deg
         if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))
                                   or not math.isfinite(value) or not 0 <= value < 90):
             raise ValueError('invalid_config:max_tool_tilt_deg')
         if type(self.filter_disconnected_points) is not bool:
             raise ValueError("invalid_config:filter_disconnected_points")
-        for name in ("component_voxel_size", "min_component_ratio", "rim_search_spacing",
+        for name in ("component_voxel_size", "min_component_ratio", "rim_search_spacing", "candidate_min_separation",
                      "min_wall_span", "max_wall_residual", "max_anchor_plane_distance", "max_normal_change_deg"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
                 raise ValueError(f"invalid_config:{name}")
         if not .5 < self.min_component_ratio <= 1:
             raise ValueError("invalid_config:min_component_ratio")
-        for name in ("input_topic", "output_topic", "poses_topic", "target_frame"):
+        for name in ("input_topic", "output_topic", "poses_topic", "candidates_topic", "target_frame", "tool_frame"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"invalid_config:{name}")
-        if self.target_frame.startswith("/"):
+        if self.target_frame.startswith("/") or self.tool_frame.startswith("/"):
             raise ValueError("frame_id_must_not_start_with_slash")
         for name in ("top_percentile", "rim_height_band", "near_side_ratio", "tf_timeout", "input_timeout"):
             value = getattr(self, name)

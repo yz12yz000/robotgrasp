@@ -154,6 +154,26 @@ def claim_batch(directory, poses, stamp_ns):
         raise ValueError("batch_already_claimed") from exc
 
 
+def claim_candidate_object(directory, batch, object_id, candidate):
+    """Claim an observed object once, independently of contact selection."""
+    import os
+    identity = {key: batch[key] for key in
+                ("task_id", "observation_id", "source_stamp_ns", "frame_id", "tool_frame")}
+    identity["object_id"] = object_id
+    encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+    payload = dict(identity, selected_candidate=candidate)
+    directory = Path(directory).expanduser()
+    directory.mkdir(parents=True, exist_ok=True)
+    try:
+        with (directory / ("object_" + digest + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(payload, stream, sort_keys=True, allow_nan=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError as exc:
+        raise ValueError("object_already_claimed") from exc
+
+
 def bounded_call(function, timeout, cancel=None, timeout_reason="interface_timeout"):
     """Bound caller waiting, while the adapter must also honor its own timeout.
 

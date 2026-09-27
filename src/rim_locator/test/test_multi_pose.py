@@ -93,7 +93,7 @@ def test_multiple_instances_reject_individually_preserve_stamp_and_sort():
     message = make_cloud(Header(stamp=stamp, frame_id='base_link'), points, ids)
     points, ids = read_xyz_object_ids(message)
     poses, status = [], []
-    node = NS(config=RimConfig(orientation_mode='wall_normal', publish_debug=False),
+    node = NS(candidates_publisher=NS(publish=lambda message: None), config=RimConfig(orientation_mode='wall_normal', publish_debug=False),
               poses_publisher=NS(publish=poses.append), publisher=NS(publish=lambda m:None),
               report=lambda state, **kw:status.append(kw))
     RimNode.finish(node, points, ids, stamp)
@@ -109,7 +109,7 @@ def test_all_rejected_instances_report_each_reason_without_a_pose():
     from rim_locator.main import RimNode
     points = np.repeat([[.3, .2, .4]], 40, axis=0)
     statuses, poses = [], []
-    node = NS(config=RimConfig(publish_debug=False),
+    node = NS(candidates_publisher=NS(publish=lambda message: None), config=RimConfig(publish_debug=False),
               report=lambda state, **details: statuses.append((state, details)),
               poses_publisher=NS(publish=poses.append))
     RimNode.finish(node, points, np.full(40, 7), Time(sec=123))

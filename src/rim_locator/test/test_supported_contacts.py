@@ -153,7 +153,7 @@ def test_failed_localization_keeps_base_cloud_ids_and_diagnostics():
     clouds, poses, reports = [], [], []
     points = bowl_points()
     stamp = Time(sec=123, nanosec=456)
-    node = NS(config=RimConfig(orientation_mode='wall_normal'),
+    node = NS(candidates_publisher=NS(publish=lambda message: None), config=RimConfig(orientation_mode='wall_normal'),
               cloud_pub=NS(publish=clouds.append), poses_publisher=NS(publish=poses.append),
               report=lambda state, **details: reports.append((state, details)))
     RimNode.finish(node, points, np.full(len(points), 7), stamp)

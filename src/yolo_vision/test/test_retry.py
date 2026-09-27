@@ -18,6 +18,7 @@ class FakeNode:
         self.config = VisionConfig(expected_width=4, expected_height=3,
                                    min_points=2, input_timeout=10., publish_debug=False)
         self.state, self.wait_started = 'ready', 0.
+        self.task_id, self.observation_id, self.source_not_before_ns = '', '', 0
         self.clock, self.calls, self.messages, self.reports = 0., 0, [], []
         self.outcomes = iter(outcomes)
         self.bridge = NS(imgmsg_to_cv2=lambda *a, **k: np.zeros((3, 4, 3), dtype=np.uint8))

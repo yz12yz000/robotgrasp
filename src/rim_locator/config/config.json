@@ -27,5 +27,9 @@
   "min_wall_span": 0.006,
   "max_wall_residual": 0.0025,
   "max_anchor_plane_distance": 0.006,
-  "max_normal_change_deg": 12.0
+  "max_normal_change_deg": 12.0,
+  "candidates_topic": "/rim_locator/grasp_candidates",
+  "tool_frame": "grasp_center",
+  "max_grasp_candidates": 8,
+  "candidate_min_separation": 0.004
 }
