@@ -1,0 +1,102 @@
+{
+  "snapshot_date": "2026-10-02",
+  "evidence_dates": "2026-09-23 to 2026-09-27",
+  "generated_images": false,
+  "note": "Original experiment images embedded unretouched. PowerPoint placement may crop the visible area. No new hardware tests were run for this presentation.",
+  "sources": {
+    "S1": {
+      "path": "docs/rim_locator_第一版设计说明.md",
+      "sha256": "090c4a5c522e24423c5466896252a5d1060b4b4abaa07cdf2f37757fbd09672a"
+    },
+    "S2": {
+      "path": "docs/supported_rim_contacts_20260923.md",
+      "sha256": "bacdf1b64d3b76983d0f62e6ec1070d9f5a9f82ce052460ea41d7b97e6bd6d56"
+    },
+    "S3": {
+      "path": "docs/demo_implementation_20260925.md",
+      "sha256": "d327f117585b0d411353534a6ae7b9e7dfdb18c7d46bd819298661994281cf8c"
+    },
+    "S4": {
+      "path": "docs/live_demo_verification_20260927.md",
+      "sha256": "7633b3750fa19ad69506388a55826a511d22cfd7db53e844b97ca4d1bb7f58b7"
+    },
+    "S5": {
+      "path": "src/rim_locator/rim_locator/rim_detection.py",
+      "sha256": "5238ea06d9eb037cbc5222e5ef72f944d70952fb6ddbf9577124cc0b99161e58"
+    },
+    "S6": {
+      "path": "src/rim_locator/config/place_config.json",
+      "sha256": "fb1a59a7c11d00c1519e348b660fb7a6e6a0cdb8f9792924101fa215f6c29f28"
+    },
+    "S7": {
+      "path": "debug_output/demo_implementation_20260925/verification_summary.json",
+      "sha256": "d94bd027ca5920964255e5f5f602dd763fc2352b698448d333d8fc61d05a60f7"
+    },
+    "S8": {
+      "path": "debug_output/live_demo_20260927_gjgip1/live_verification_summary.json",
+      "sha256": "46c2694d16eba83fcc84a7118a8237d733e0624a402bd164ff96ef3c3f29ac62"
+    },
+    "S9": {
+      "path": "debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/result.json",
+      "sha256": "6b9162b7a65570baeb81aaa69a6ff62008403e17896c2d201b76749acc2ba34f"
+    },
+    "S10": {
+      "path": "docs/planning_diagnosis_20260923.md",
+      "sha256": "42a3ac27d521511978507f6bdcd170212df39e2c0e6dae8e50ae7f913caede30"
+    },
+    "S11": {
+      "path": "debug_output/demo_implementation_20260925/moveit/result.json",
+      "sha256": "072d548f42354e7a151432bb63f20e42cecb3846a02a1272473339c1a9a9cdb2"
+    },
+    "S12": {
+      "path": "src/grasp_executor/config/place_config.json",
+      "sha256": "583f6f9d4833e8c168ca005cb7724c546264a94f8d248fb0f55cc2f3c227a061"
+    },
+    "F1": {
+      "path": "debug_output/rim_geometry_20260923/frame01/localization.json",
+      "sha256": "0f40e8d24adc3967f396e646ac6422c80b10f412c9fea0d7895faf597e1801ad"
+    },
+    "F2": {
+      "path": "debug_output/rim_geometry_20260923/frame02/localization.json",
+      "sha256": "e88ca6ec25fc64064513d83638ec2133eb3c798ac2a36bb27e42251c4695ecad"
+    },
+    "F3": {
+      "path": "debug_output/rim_geometry_20260923/frame03/localization.json",
+      "sha256": "c1a6962b8118cc8a05d3ff33bcdcc95aeaed6bafda03c6cb91614a465df62445"
+    }
+  },
+  "images": {
+    "I1": {
+      "path": "debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png",
+      "sha256": "fcc2a0c40377bb18e198216f21a2bfce615016f481ada9b98b08dd7aa0d51a77"
+    },
+    "I2": {
+      "path": "debug_output/rim_geometry_20260923/frame01/geometry_before.png",
+      "sha256": "e6c13744f3a279a21391b32a849e12cee2124ba8177a0ff968027268a6313832"
+    },
+    "I3": {
+      "path": "debug_output/rim_geometry_20260923/frame01/contacts_detail.png",
+      "sha256": "aa623c693db821b748432a1bb713ee8af00b091b2f559dd8e754973021bda612"
+    },
+    "I4": {
+      "path": "debug_output/live_demo_20260927_gjgip1/lift_02.png",
+      "sha256": "9ddad7da91e5fa8a7ace3a35bbaf2ecbcfa3b5ad95a15d4816995948e34b0a7f"
+    },
+    "I5": {
+      "path": "debug_output/live_demo_20260927_gjgip1/final_scene.png",
+      "sha256": "c79e86eae51aa7cede57107addab33dc4ace5ee5e120eba615d32247d4162c42"
+    },
+    "I6": {
+      "path": "debug_output/rim_geometry_20260923/frame02/contacts_detail.png",
+      "sha256": "dc7a66b36b45fdc349b97d5dad42e09c5dfa93f4ca5c461e446b29a2e933bba3"
+    },
+    "I7": {
+      "path": "debug_output/rim_geometry_20260923/frame03/contacts_detail.png",
+      "sha256": "de1898d83bf4487175758477f6f77fd9d1868635db9fab6fe96d0de248df2dda"
+    },
+    "I8": {
+      "path": "debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/detection_overlay.png",
+      "sha256": "70de24eda6b0560e962251f023b018ea3ba2addc52aa594cfadbb04a21a101f0"
+    }
+  }
+}

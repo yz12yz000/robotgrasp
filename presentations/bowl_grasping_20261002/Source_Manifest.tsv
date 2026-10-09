@@ -1,0 +1,63 @@
+slide	title	kind	path
+1	RGB-D–Guided Bowl Grasping and Placement with a UR5e	document/data	docs/README.md
+1	RGB-D–Guided Bowl Grasping and Placement with a UR5e	document/data	docs/live_demo_verification_20260927.md
+1	RGB-D–Guided Bowl Grasping and Placement with a UR5e	original image	debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png
+2	A defined tabletop task, with separate pick and place regions	document/data	docs/live_demo_verification_20260927.md
+2	A defined tabletop task, with separate pick and place regions	document/data	src/yolo_vision/config/live_pick_roi_20260927.json
+2	A defined tabletop task, with separate pick and place regions	original image	debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png
+3	What changed from the initial grasping pipeline	document/data	docs/README.md
+3	What changed from the initial grasping pipeline	document/data	docs/demo_implementation_20260925.md
+3	What changed from the initial grasping pipeline	document/data	docs/planning_diagnosis_20260923.md
+4	Two bowls are segmented and reconstructed independently	document/data	debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/result.json
+4	Two bowls are segmented and reconstructed independently	original image	debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/detection_overlay.png
+5	White and green bowls offer different wall evidence	document/data	debug_output/rim_geometry_20260923/frame01/localization.json
+5	White and green bowls offer different wall evidence	document/data	docs/supported_rim_contacts_20260923.md
+5	White and green bowls offer different wall evidence	original image	debug_output/rim_geometry_20260923/frame01/contacts.png
+6	Both bowls were localized in three recorded observations	document/data	docs/supported_rim_contacts_20260923.md
+6	Both bowls were localized in three recorded observations	document/data	debug_output/rim_geometry_20260923/frame01/localization.json
+6	Both bowls were localized in three recorded observations	document/data	debug_output/rim_geometry_20260923/frame02/localization.json
+6	Both bowls were localized in three recorded observations	document/data	debug_output/rim_geometry_20260923/frame03/localization.json
+6	Both bowls were localized in three recorded observations	original image	debug_output/rim_geometry_20260923/frame01/contacts.png
+7	Each bowl has its own candidates and processing order	document/data	debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/candidates.json
+7	Each bowl has its own candidates and processing order	document/data	debug_output/live_demo_20260927_gjgip1/plan_01/result.json
+7	Each bowl has its own candidates and processing order	original image	debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/detection_overlay.png
+8	Feasible contacts still require feasible robot motion	document/data	docs/planning_diagnosis_20260923.md
+8	Feasible contacts still require feasible robot motion	document/data	src/grasp_executor/grasp_executor/ik_angles.py
+8	Feasible contacts still require feasible robot motion	document/data	debug_output/demo_implementation_20260925/moveit/result.json
+8	Feasible contacts still require feasible robot motion	original image	debug_output/live_demo_20260927_gjgip1/lift_02.png
+9	A stored TCP reference makes placement repeatable	document/data	src/grasp_executor/config/place_config.json
+9	A stored TCP reference makes placement repeatable	document/data	src/grasp_executor/grasp_executor/grasp.py
+9	A stored TCP reference makes placement repeatable	document/data	docs/place_offline_debug_20260923.md
+9	A stored TCP reference makes placement repeatable	original image	debug_output/planning_diagnosis_20260923/green_lifted.png
+9	A stored TCP reference makes placement repeatable	original image	debug_output/planning_diagnosis_20260923/green_placed.jpg
+9	A stored TCP reference makes placement repeatable	original image	debug_output/planning_diagnosis_20260923/white_placed_final.png
+10	One completed bowl, then a new observation	document/data	debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/result.json
+10	One completed bowl, then a new observation	document/data	debug_output/live_demo_20260927_gjgip1/live_verification_summary.json
+10	One completed bowl, then a new observation	original image	debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/round_0001/detection_overlay.png
+10	One completed bowl, then a new observation	original image	debug_output/live_demo_20260927_gjgip1/final_scene.png
+11	Both bowl types were lifted and placed in supervised trials	document/data	docs/planning_diagnosis_20260923.md
+11	Both bowl types were lifted and placed in supervised trials	original image	debug_output/planning_diagnosis_20260923/green_lifted.png
+11	Both bowl types were lifted and placed in supervised trials	original image	debug_output/planning_diagnosis_20260923/green_placed.jpg
+11	Both bowl types were lifted and placed in supervised trials	original image	debug_output/planning_diagnosis_20260923/white_lifted.jpg
+11	Both bowl types were lifted and placed in supervised trials	original image	debug_output/planning_diagnosis_20260923/white_placed_final.png
+12	The fixed placement point exposed a multi-bowl limitation	document/data	docs/planning_diagnosis_20260923.md
+12	The fixed placement point exposed a multi-bowl limitation	document/data	docs/demo_implementation_20260925.md
+12	The fixed placement point exposed a multi-bowl limitation	original image	debug_output/planning_diagnosis_20260923/green_placed.jpg
+13	Post-fix execution completed a full cycle and re-observation	document/data	docs/live_demo_verification_20260927.md
+13	Post-fix execution completed a full cycle and re-observation	document/data	debug_output/live_demo_20260927_gjgip1/live_verification_summary.json
+13	Post-fix execution completed a full cycle and re-observation	document/data	debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/result.json
+13	Post-fix execution completed a full cycle and re-observation	original image	debug_output/live_demo_20260927_gjgip1/lift_02.png
+14	An interrupted trial led to stronger process supervision	document/data	docs/live_demo_verification_20260927.md
+14	An interrupted trial led to stronger process supervision	document/data	src/grasp_executor/grasp_executor/process_guard.py
+14	An interrupted trial led to stronger process supervision	original image	debug_output/live_demo_20260927_gjgip1/lift_01.png
+15	Software validation is distinct from physical success	document/data	debug_output/live_demo_20260927_gjgip1/live_verification_summary.json
+15	Software validation is distinct from physical success	document/data	debug_output/demo_implementation_20260925/verification_summary.json
+16	What is demonstrated, and what needs the next experiment	document/data	docs/README.md
+16	What is demonstrated, and what needs the next experiment	document/data	docs/demo_implementation_20260925.md
+16	What is demonstrated, and what needs the next experiment	document/data	docs/live_demo_verification_20260927.md
+17	Appendix A — Current configuration and interfaces	document/data	src/rim_locator/config/place_config.json
+17	Appendix A — Current configuration and interfaces	document/data	src/grasp_executor/config/place_config.json
+17	Appendix A — Current configuration and interfaces	document/data	docs/README.md
+18	Appendix B — Reproduction and source records	document/data	New_run/README.md
+18	Appendix B — Reproduction and source records	document/data	docs/README.md
+18	Appendix B — Reproduction and source records	document/data	docs/live_demo_verification_20260927.md

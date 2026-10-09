@@ -1,0 +1,465 @@
+RESEARCH PROGRESS / 02 OCT 2026               EXPERIMENTS: 23–27 SEP 2026
+
+
+
+
+RGB-D–Guided
+Bowl Grasping
+and Placement
+ with a UR5e
+ From single contacts to
+ candidate-based planning
+ and repeated observation
+
+
+ TWO BOWLS · ONE ROBOT · VERIFIED EXECUTION
+
+
+
+
+UR5e / RGB-D BOWL MANIPULATION                                    01 / 18
+01 / TASK & SETUP                                                                       PROJECT EVIDENCE
+
+
+
+
+A defined tabletop task, with separate pick and place regions
+UR5e + parallel gripper + Orbbec Gemini2L + ROS 2 Humble
+
+
+                                                            1 Detect
+                                                            Observe the bowls inside the picking
+                                                            region.
+
+
+                                                            2 Grasp and place
+                                           PICKING REGION
+
+                                                            Use a rim contact and a stored
+                         Fixed placement                    placement pose.
+                         reference
+
+                                                            3 Observe again
+                                                            Acquire a new scene after release and
+                                                            retreat.
+
+
+
+UR5e / RGB-D BOWL MANIPULATION                                                                     02 / 18
+02 / CONTRIBUTIONS                                                                                            PROJECT EVIDENCE
+
+
+
+
+What changed from the initial grasping pipeline
+Three ROS packages retained; perception, geometry and execution extended.
+
+
+ Area                       Earlier capability                      Current implementation
+
+ Perception                 Single-target output                    Multiple instances + depth diagnostics
+
+
+ Rim geometry               One preferred contact                   Up to 8 supported candidates per bowl
+
+
+ Motion                     Approach / descend / lift               Six-stage grasp, transfer and placement
+
+
+ Task execution             Reuse one target snapshot               One bowl per round; then observe again
+
+
+ Operation                  Separate manual processes               Mode isolation, logs and process supervision
+
+
+  Contribution: an integrated, testable manipulation pipeline with explicit failure handling.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                          03 / 18
+03 / TWO-BOWL PERCEPTION                                                                                    PROJECT EVIDENCE
+
+
+
+
+Two bowls are segmented and reconstructed independently
+One synchronized RGB-D observation | 27 Sep 2026 | plan-only dataset
+
+
+                                                                          Recorded value       White bowl     Green bowl
+
+
+                                                                          Instance ID          1              0
+
+
+                                                                          Confidence           0.762          0.805
+
+
+                                                                          Valid depth points   6,146          4,595
+
+
+                                                                          Valid depth ratio    97.8%          100.0%
+
+
+ORIGINAL SEGMENTATION OVERLAY · DISPLAY CROP
+
+
+
+
+  Detection, valid depth and a usable grasp are three different checks.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                        04 / 18
+04 / TWO-BOWL GEOMETRY                                                                                          PROJECT EVIDENCE
+
+
+
+
+White and green bowls offer different wall evidence
+Recorded geometry example | 23 Sep 2026, frame 01
+
+
+
+
+  Green bowl                                                          White bowl
+  30 wall points | 11.73° local wall tilt                             33 wall points | 31.89° local wall tilt
+  0.609 mm plane residual                                             0.549 mm plane residual
+  Measured wall tilt is not commanded tool tilt; the current tool remains vertical.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                            05 / 18
+05 / TWO-BOWL LOCALIZATION                                                                                       PROJECT EVIDENCE
+
+
+
+
+Both bowls were localized in three recorded observations
+Recorded RGB-D replay | same geometric acceptance rules
+
+
+                                                   Frame    Green: points / tilt      White: points / tilt   Localized
+
+                                                   01       30 / 11.73°               33 / 31.89°            2/2
+
+
+                                                   02       42 / 13.82°               43 / 36.80°            2/2
+
+
+                                                   03       50 / 8.82°                23 / 37.37°            2/2
+
+
+
+                                                   Quality gates
+                                                   ≥20 wall points · ≥6 mm wall span
+MEASURED CONTACTS, FRAME 01
+                                                   ≤2.5 mm residual · ≤12° normal change
+
+  Observed fitting residual: 0.46–0.74 mm. This is not ground-truth positioning accuracy.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                             06 / 18
+06 / TWO-BOWL CANDIDATES                                                                                          PROJECT EVIDENCE
+
+
+
+
+Each bowl has its own candidates and processing order
+27 Sep plan-only snapshot | complete six-stage plans found for both bowls
+
+
+                                                               Bowl              ID    Candidates   XY distance     Plan
+
+
+                                                               White bowl        1     8            0.654 m         6/6
+
+
+                                                               Green bowl        0     8            0.827 m         6/6
+
+
+
+
+                                                                Before the first motion
+ Ordering uses geometry, not color
+                                                                Reject infeasible candidates. Execute only after the
+ or instance ID.                                                entire six-stage path passes.
+
+
+  Both targets planned successfully in this snapshot; planning success is not physical grasp success.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                              07 / 18
+07 / MOTION PLANNING                                                                                                  PROJECT EVIDENCE
+
+
+
+
+Feasible contacts still require feasible robot motion
+Bounded IK search + OMPL transfer + Cartesian vertical segments
+
+
+                                                                                   Joint-space consistency
+                                                                                   Equivalent angles and URDF soft limits
+                                                                                   prevent avoidable joint winding.
+
+
+                                                                                   Whole-path feasibility
+                                                                                   Validate approach, descent, lift, transfer,
+                                                                                   lowering and retreat.
+
+
+                                                                                   Bounded fallback
+                                                                                   Try another candidate only before motion
+                                                                                   has started.
+
+  Candidate fallback is verified in isolated MoveIt tests; live fallback remains untested.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                                   08 / 18
+08 / SIX-STAGE GRASP & PLACE                                                                                         PROJECT EVIDENCE
+
+
+
+
+A stored TCP reference makes placement repeatable
+Fixed 6D pose | static TCP-to-grasp-center transform | MoveIt execution
+
+
+
+
+LIFT · 23 SEP                                      PLACE · 23 SEP                                 RETREAT · 23 SEP
+
+
+
+ 01 Approach              02 Descend            03 Lift      04 Transfer           05 Lower       06 Retreat
+
+
+
+  10 cm approach / lift          |   20 cm placement descent        |   1 s hold before release
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                                 09 / 18
+09 / REPEATED OBSERVATION                                                                                 PROJECT EVIDENCE
+
+
+
+
+One completed bowl, then a new observation
+Post-fix green-bowl run | 27 Sep 2026
+
+
+
+
+ROUND 1 · TARGET DETECTED                                        ROUND 2 · EMPTY PICKING REGION
+
+
+1 bowl completed                                                 Fresh capture after retreat
+6 motion stages executed                                         0 targets reported by the next observation
+  New timestamps, new candidates and a measured robot start state for every round.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                      10 / 18
+10 / TWO-BOWL PHYSICAL EVIDENCE                                                                   PROJECT EVIDENCE
+
+
+
+
+Both bowl types were lifted and placed in supervised trials
+23 Sep 2026 | observations from separate execution and recovery steps
+
+
+
+
+GREEN · LIFTED                                                    GREEN · PLACED
+
+
+
+
+WHITE · LIFTED                                                    WHITE · PLACED
+
+
+  Human intervention occurred between these steps; this is not an uninterrupted two-bowl cycle.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                              11 / 18
+11 / TWO-BOWL TASK CONSTRAINT                                                                                  PROJECT EVIDENCE
+
+
+
+
+The fixed placement point exposed a multi-bowl limitation
+A successful first placement can occupy the destination needed by the next bowl.
+
+
+                                                                                   What happened
+                                                                                   The placed green bowl occupied the
+                                                                                   fixed destination.
+
+
+                                                                                   What the trial required
+                                                                                   An operator cleared the destination
+                                                                                   before the white-bowl trial.
+
+                                                                                   Not yet implemented:
+                                                                                   placement occupancy sensing
+                                                                                   or automatic slot allocation
+
+  Separating the picking ROI prevents re-picking; it does not prove placement capacity.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                           12 / 18
+12 / LIVE VALIDATION · 27 SEP                                                                            PROJECT EVIDENCE
+
+
+
+
+Post-fix execution completed a full cycle and re-observation
+Selected run: execute_02_after_fix | real robot and camera
+
+
+                                                                           Recorded field       Result
+
+                                                                           Outcome              completed
+
+                                                                           Completed cycles     1
+
+                                                                           Observation rounds   2
+
+                                                                           Candidate attempts   1
+
+                                                                           Cleanup errors       None reported
+
+
+GREEN-BOWL MANIPULATION · ORIGINAL CAMERA IMAGE
+
+
+
+
+  Command completion is logged; independent grasp / placement sensing is not available.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                     13 / 18
+13 / FAILURE-DRIVEN IMPROVEMENT                                                                              PROJECT EVIDENCE
+
+
+
+
+An interrupted trial led to stronger process supervision
+The first 27 Sep white-bowl run was not counted as a complete success.
+
+
+                                                               Observed gap
+                                                               The runner exited while the independent
+                                                               executor remained active.
+
+                                                               Implemented response
+                                                               Process-identity monitoring
+                                                               Explicit termination-signal handling
+                                                               Task-owned process cleanup
+WHITE BOWL LIFTED · LATER RETREAT WAS CANCELLED
+
+
+
+
+  After motion starts: stop and report errors; do not automatically release, switch candidates or regrasp.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                         14 / 18
+14 / VALIDATION EVIDENCE                                                                                   PROJECT EVIDENCE
+
+
+
+
+Software validation is distinct from physical success
+Recorded test results | suite counts are not combined into a grasp success rate
+
+
+ Validation layer                Result        Date        What it verifies
+
+ Regression tests                503 passed    27 Sep      Logic, state transitions and failure handling
+
+
+ Isolated ROS startup            7 passed      27 Sep      Controller checks and startup behavior
+
+
+ Launch contracts                32 checks     27 Sep      Parameters, namespaces and supervision
+
+
+ MoveIt integration              15 checks     25 Sep      Real planning with simulated execution
+
+
+ Physical trials                 Images +      23 / 27     Supervised lifting, placement and retreat
+                                 logs          Sep
+
+  Physical success rate remains unmeasured; automated test coverage is a separate result.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                       15 / 18
+15 / CONCLUSIONS & NEXT STEPS                                                                       PROJECT EVIDENCE
+
+
+
+
+What is demonstrated, and what needs the next experiment
+A working manipulation system with explicit evidence boundaries
+
+
+  Demonstrated                                                        Next controlled comparison
+  Two-instance perception and local                                   Single vs. multiple candidates
+  geometry                                                            Frozen targets vs. fresh observations
+  Candidate-based complete-path planning                              Repeated white / green bowl trials
+  Physical lifts and placements                                       Placement occupancy and grasp sensing
+  Fresh observation after a completed cycle
+
+
+
+
+ Measure: physical grasp success · full-cycle success · cycle time · human interventions
+
+  Goal: quantify the benefit of the added functions, not only demonstrate that a run can finish.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                16 / 18
+APPENDIX / IMPLEMENTATION REFERENCE                                                                             PROJECT EVIDENCE
+
+
+
+
+Appendix A — Current configuration and interfaces
+Values describe the current project configuration, not universal operating limits.
+
+
+ Item                            Current setting                        Meaning
+
+ Candidate interface             /rim_locator/grasp_candidates          Versioned JSON grouped by object
+
+ Candidates per bowl             Up to 8; 4 mm separation               Bounded local contact alternatives
+
+ Tool / planning frame           grasp_center / tool0                   Connected by fixed TF
+
+ Approach / lift                 0.10 m                                 Along base_link Z
+
+ Place descent / dwell           0.20 m / 1.0 s                         Fixed reference, then release
+
+ Target age ceiling              600 s                                  New capture still required each round
+
+
+  No added table model or gripper envelope; URDF robot geometry and trajectory checks remain active.
+
+UR5e / RGB-D BOWL MANIPULATION                                                                                            17 / 18
+APPENDIX / REPRODUCIBILITY                                                                         PROJECT EVIDENCE
+
+
+
+
+Appendix B — Reproduction and source records
+Root-level scripts and matching New_run wrappers use the same implementation.
+
+OFFLINE BUILD AND VALIDATION
+
+
+
+   ./run_pipeline_place_offline_test.sh
+
+HARDWARE PREPARATION → PREVIEW → EXECUTION
+
+
+
+   ./run_robot_prepare.sh
+   ./run_pipeline_place_test.sh --vision-config <site_roi.json>
+   ./run_pipeline_place_execute.sh --vision-config <site_roi.json>
+
+Site ROI: src/yolo_vision/config/live_pick_roi_20260927.json
+
+
+Primary evidence: docs/live_demo_verification_20260927.md
+Recorded images and logs: debug_output/live_demo_20260927_gjgip1/
+
+  English slides · Chinese speaker notes · original experimental images · traceable source files
+
+UR5e / RGB-D BOWL MANIPULATION                                                                               18 / 18
+

@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-03",
+  "sources": {
+    "M1": {
+      "path": "src/grasp_executor/grasp_executor/moveit_ros.py",
+      "sha256": "521bf30afd2067e4481bf186eb7baf9a6f97a470806be68eaf1c83419fd9889a"
+    },
+    "M2": {
+      "path": "src/grasp_executor/grasp_executor/trajectory.py",
+      "sha256": "79f1e4e00a5d2eaefd904040d5f18d408160c2256706a7b7a7e46f502b25ca07"
+    },
+    "M3": {
+      "path": "src/grasp_executor/config/place_config.json",
+      "sha256": "583f6f9d4833e8c168ca005cb7724c546264a94f8d248fb0f55cc2f3c227a061"
+    },
+    "M4": {
+      "path": "src/grasp_executor/grasp_executor/candidates.py",
+      "sha256": "dd8a727d0aabe80c3c07bc3aa33e56b41ff05419b614016dbfea9d101b107715"
+    }
+  },
+  "figure": {
+    "path": "assets/planning_principles.png",
+    "mode": "built-in image_gen",
+    "prompt": "image_prompt.txt",
+    "description": "Conceptual method illustration; not an experimental trajectory",
+    "sha256": "9d0f329b025967614fd1bb3bc8c9b5f3e37642fb7f384ef4f3dab8b39e20e762"
+  },
+  "robot_photographs": false
+}

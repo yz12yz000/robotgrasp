@@ -1,0 +1,10 @@
+{
+  "slides": 2,
+  "english_only_slides": true,
+  "chinese_explanatory_notes": true,
+  "robot_images_removed": true,
+  "generated_method_figure_embedded": true,
+  "image_mode": "built-in image_gen",
+  "render_review": "Complete; overflowing caption shortened",
+  "project_code_modified": false
+}

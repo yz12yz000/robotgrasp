@@ -1,0 +1,240 @@
+[
+  {
+    "number": 1,
+    "title": "RGB-D–Guided Bowl Grasping and Placement with a UR5e",
+    "section": "RESEARCH PROGRESS  /  02 OCT 2026",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png"
+    ],
+    "sources": [
+      "docs/README.md",
+      "docs/live_demo_verification_20260927.md"
+    ],
+    "note": "本项目利用 RGB-D 相机识别桌面上的碗，根据碗沿局部几何生成抓取姿态，再由 UR5e 完成抓取与固定位置放置。今天重点汇报从单点抓取发展到同碗多候选和逐次重新观察的过程，并用白碗、绿碗的原始结果说明实际进展。所有实验图片来自项目记录，离线测试和现场运动会明确区分。本报告不是总体成功率统计。"
+  },
+  {
+    "number": 2,
+    "title": "A defined tabletop task, with separate pick and place regions",
+    "section": "01  /  TASK & SETUP",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png"
+    ],
+    "sources": [
+      "docs/live_demo_verification_20260927.md",
+      "src/yolo_vision/config/live_pick_roi_20260927.json"
+    ],
+    "note": "任务是在固定相机与机器人基座条件下，从指定取物区域内选择碗，夹持碗沿，并搬到保存好的放置位姿。图中的取物框对应 9 月 27 日现场 ROI，放置标记表示固定参考位置的近似图像投影，不表示已测量的容器边界。两区必须分开，否则下一轮可能重新识别刚放下的碗。当前系统不加载桌面或额外夹爪保护盒，仍保留机器人 URDF 自碰撞和轨迹约束。"
+  },
+  {
+    "number": 3,
+    "title": "What changed from the initial grasping pipeline",
+    "section": "02  /  CONTRIBUTIONS",
+    "images": [],
+    "sources": [
+      "docs/README.md",
+      "docs/demo_implementation_20260925.md",
+      "docs/planning_diagnosis_20260923.md"
+    ],
+    "note": "系统继续使用 yolo_vision、rim_locator 和 grasp_executor 三个包。主要改动是从单目标点云扩展到逐实例数据，从一个首选接触点扩展到多个有几何依据的候选，并把抓取扩展为完整六段抓放。运行器负责每次只执行一只碗，完成后重新观察。除此之外，还增加了配置快照、任务隔离、进程监督和可重复测试。使用的是已有分割模型，没有声称训练了新的抓取神经网络。"
+  },
+  {
+    "number": 4,
+    "title": "Two bowls are segmented and reconstructed independently",
+    "section": "03  /  TWO-BOWL PERCEPTION",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/detection_overlay.png"
+    ],
+    "sources": [
+      "debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/result.json"
+    ],
+    "note": "这是同一帧真实双碗观测。白碗和绿碗共享类别 bowl，但拥有不同的观测内编号、分割掩膜和三维点集合。白碗有少量无效深度，绿碗在该帧掩膜内深度全部有效。程序保留原始采集时间，并避免掩膜重叠造成同一个像素分给两个物体。这里的置信度与有效深度比例只代表本帧，不代表整个系统的检测率。颜色名称仅用于向观众说明，不是算法分支。"
+  },
+  {
+    "number": 5,
+    "title": "White and green bowls offer different wall evidence",
+    "section": "04  /  TWO-BOWL GEOMETRY",
+    "images": [
+      "debug_output/rim_geometry_20260923/frame01/contacts.png",
+      "debug_output/rim_geometry_20260923/frame01/contacts.png"
+    ],
+    "sources": [
+      "debug_output/rim_geometry_20260923/frame01/localization.json",
+      "docs/supported_rim_contacts_20260923.md"
+    ],
+    "note": "双碗试验的价值不仅是目标数量增加，也在于局部壁面和深度分布不同。这里展示的是 9 月 23 日的一次实际观测，绿色碗选中局部壁面的倾角约 11.7 度，白色碗约 31.9 度。这些角度是该次接触区域的拟合结果，不是每只碗固定不变的材料或形状参数。当前正式配置将工具倾角限制为零，即工具仍竖直接近，壁面几何提供接触位置及水平夹合方向。"
+  },
+  {
+    "number": 6,
+    "title": "Both bowls were localized in three recorded observations",
+    "section": "05  /  TWO-BOWL LOCALIZATION",
+    "images": [
+      "debug_output/rim_geometry_20260923/frame01/contacts.png"
+    ],
+    "sources": [
+      "docs/supported_rim_contacts_20260923.md",
+      "debug_output/rim_geometry_20260923/frame01/localization.json",
+      "debug_output/rim_geometry_20260923/frame02/localization.json",
+      "debug_output/rim_geometry_20260923/frame03/localization.json"
+    ],
+    "note": "旧方法只在一个近侧锚点和固定邻域拟合壁面，容易受遮挡、弧面或碗底污染影响。改进后在顶部点带搜索其他接触区域，并要求不同尺度下的法向一致。三份独立现场观测都检测到两只碗，也都为两只生成了定位结果。表格展示局部壁面支持点数和倾角。六次拟合的残差约为 0.46 到 0.74 毫米，这只是拟合质量，不能作为绝对定位精度或实际抓取成功率。"
+  },
+  {
+    "number": 7,
+    "title": "Each bowl has its own candidates and processing order",
+    "section": "06  /  TWO-BOWL CANDIDATES",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/detection_overlay.png"
+    ],
+    "sources": [
+      "debug_output/live_demo_20260927_gjgip1/plan_01/round_0001/candidates.json",
+      "debug_output/live_demo_20260927_gjgip1/plan_01/result.json"
+    ],
+    "note": "这一帧白碗和绿碗各有 8 个抓取候选。候选属于同一只碗的不同接触选择，不会被当成额外目标。物体按首选接触点到机器人基座的 XY 距离排序，因此该帧白碗先于绿碗。这里的编号只属于当前观测，不能拿其他帧的编号直接匹配。两只碗各自完整六段规划都已通过，但这是 plan-only；真正执行时会重新观测，并且每轮只抓一只。"
+  },
+  {
+    "number": 8,
+    "title": "Feasible contacts still require feasible robot motion",
+    "section": "07  /  MOTION PLANNING",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/lift_02.png"
+    ],
+    "sources": [
+      "docs/planning_diagnosis_20260923.md",
+      "src/grasp_executor/grasp_executor/ik_angles.py",
+      "debug_output/demo_implementation_20260925/moveit/result.json"
+    ],
+    "note": "接触点几何合理之后，机械臂仍可能无法到达或无法完成后续下降。现场曾复现肩部和腕部关节绕行、软硬限位不一致及接近轨迹过长的问题。当前实现检查等价关节角、软硬限位交集，并对有限个 IK 分支按关节行程排序。接近、下降和抬升还要联合检查。同碗候选回退已有真实 MoveIt 配合模拟控制器的证据，但 9 月 27 日现场运行使用的是首候选，没有实机验证首候选失败后换第二个的分支。"
+  },
+  {
+    "number": 9,
+    "title": "A stored TCP reference makes placement repeatable",
+    "section": "08  /  SIX-STAGE GRASP & PLACE",
+    "images": [
+      "debug_output/planning_diagnosis_20260923/green_lifted.png",
+      "debug_output/planning_diagnosis_20260923/green_placed.jpg",
+      "debug_output/planning_diagnosis_20260923/white_placed_final.png"
+    ],
+    "sources": [
+      "src/grasp_executor/config/place_config.json",
+      "src/grasp_executor/grasp_executor/grasp.py",
+      "docs/place_offline_debug_20260923.md"
+    ],
+    "note": "固定放置准备姿态保存于配置，以机器人固定基座为参考，不在每次程序启动时重新采当前位置。执行前将 TCP 参考通过静态 TF 转为 grasp_center 的目标，再由 MoveIt 求解。运动一共六段；接近位打开夹爪，下降后闭合，抬升后转移，放置下降到位并静止后等待一秒，再打开并退回。预抓和抬升高度为 10 厘米，放置下降为 20 厘米。页面照片是不同实验中的动作示例，不是同一次连续过程。"
+  },
+  {
+    "number": 10,
+    "title": "One completed bowl, then a new observation",
+    "section": "09  /  REPEATED OBSERVATION",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/round_0001/detection_overlay.png",
+      "debug_output/live_demo_20260927_gjgip1/final_scene.png"
+    ],
+    "sources": [
+      "debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/result.json",
+      "debug_output/live_demo_20260927_gjgip1/live_verification_summary.json"
+    ],
+    "note": "修复后的绿碗运行第一轮检测到一只碗，完成抓取、放置、释放和退回后，自动启动第二轮。第二轮原始采集时间严格晚于新的采集门槛，检测到取物区为空后任务结束。这里不复用旧目标坐标，也不依赖跨帧物体编号。右侧照片记录最终场景，零检测结论同时来自第二轮结果日志。它不能独立证明放置成功，必须结合执行状态和现场观察。这是分步重新观察，不是运动中视觉伺服。"
+  },
+  {
+    "number": 11,
+    "title": "Both bowl types were lifted and placed in supervised trials",
+    "section": "10  /  TWO-BOWL PHYSICAL EVIDENCE",
+    "images": [
+      "debug_output/planning_diagnosis_20260923/green_lifted.png",
+      "debug_output/planning_diagnosis_20260923/green_placed.jpg",
+      "debug_output/planning_diagnosis_20260923/white_lifted.jpg",
+      "debug_output/planning_diagnosis_20260923/white_placed_final.png"
+    ],
+    "sources": [
+      "docs/planning_diagnosis_20260923.md"
+    ],
+    "note": "这四张原图记录 9 月 23 日绿碗抓起、绿碗放下、白碗抓起和白碗放下。绿碗首次执行中有人进入区域而中止，之后经用户确认使用一次性恢复脚本继续完成，不能当作自动恢复能力。随后人工清空固定放置区，白碗正式执行最终完整成功。两类碗都完成实际搬运，有图像和日志支持；但是这些不是一次无人干预的连续双碗任务，也不能由这两次展示计算总体成功率。"
+  },
+  {
+    "number": 12,
+    "title": "The fixed placement point exposed a multi-bowl limitation",
+    "section": "11  /  TWO-BOWL TASK CONSTRAINT",
+    "images": [
+      "debug_output/planning_diagnosis_20260923/green_placed.jpg"
+    ],
+    "sources": [
+      "docs/planning_diagnosis_20260923.md",
+      "docs/demo_implementation_20260925.md"
+    ],
+    "note": "双碗任务揭示了单碗演示不容易发现的问题：第一个碗放到固定位置后，第二个碗不能直接复用同一个被占据的放置空间。9 月 23 日的实验由人员移走已放好的绿碗，之后再继续白碗。现有程序没有放置区容量感知，也没有自动分配多个落点或堆叠策略。当前取物 ROI 与放置区分离，可以减少重复检测，但它本身并不解决接收区占用问题。这是后续真正连续多碗任务必须验收的条件。"
+  },
+  {
+    "number": 13,
+    "title": "Post-fix execution completed a full cycle and re-observation",
+    "section": "12  /  LIVE VALIDATION  ·  27 SEP",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/lift_02.png"
+    ],
+    "sources": [
+      "docs/live_demo_verification_20260927.md",
+      "debug_output/live_demo_20260927_gjgip1/live_verification_summary.json",
+      "debug_output/live_demo_20260927_gjgip1/execute_02_after_fix/result.json"
+    ],
+    "note": "9 月 27 日初始双碗都通过了六段规划。白碗现场抓起并放下，但首次运行终端异常退出，退回阶段被取消，所以不能算完整任务成功。修复运行器监督后，重新采集剩余绿碗并完成全流程，第二轮重新观察到零目标。这里表中的完成次数仅指这次修复后的绿碗运行，不是整个项目的实验总数。动作结果成功仍不等于夹持传感器确认，程序保留 grasp_verified=false 和 placement_verified=false。"
+  },
+  {
+    "number": 14,
+    "title": "An interrupted trial led to stronger process supervision",
+    "section": "13  /  FAILURE-DRIVEN IMPROVEMENT",
+    "images": [
+      "debug_output/live_demo_20260927_gjgip1/lift_01.png"
+    ],
+    "sources": [
+      "docs/live_demo_verification_20260927.md",
+      "src/grasp_executor/grasp_executor/process_guard.py"
+    ],
+    "note": "第一次白碗运行的终端会话结束后，独立执行器仍在运行。终端被谁结束尚未确定，已经确认并修复的是执行器没有监测运行器消失这一缺口。新增监督机制同时检查 PID 和进程启动身份，防止 PID 复用；运行器消失时触发既有取消和停止流程，不自动释放。SIGTERM 与 SIGHUP 的所属节点清理已在隔离 ROS 中验证，运动期间异常由假接口测试，没有故意对运动中的真机注入崩溃。"
+  },
+  {
+    "number": 15,
+    "title": "Software validation is distinct from physical success",
+    "section": "14  /  VALIDATION EVIDENCE",
+    "images": [],
+    "sources": [
+      "debug_output/live_demo_20260927_gjgip1/live_verification_summary.json",
+      "debug_output/demo_implementation_20260925/verification_summary.json"
+    ],
+    "note": "验证分成纯逻辑、ROS 启动和通信、实际 MoveIt 配合模拟控制器，以及现场运动几个层级。503 项是 9 月 27 日软件回归数量，默认跳过的 7 项隔离启动测试后来单独全部通过。15 项 MoveIt 检查来自 9 月 25 日，包含候选回退、模拟执行、不可达拒绝和工具变换。表中日期及范围分别列出，不把不同套件数量相加，也不把软件通过数当成物理抓取次数。现场总体成功率仍需规范重复试验。"
+  },
+  {
+    "number": 16,
+    "title": "What is demonstrated, and what needs the next experiment",
+    "section": "15  /  CONCLUSIONS & NEXT STEPS",
+    "images": [],
+    "sources": [
+      "docs/README.md",
+      "docs/demo_implementation_20260925.md",
+      "docs/live_demo_verification_20260927.md"
+    ],
+    "note": "目前已经打通多实例 RGB-D 感知、局部碗沿候选、完整路径预检、固定放置和逐次重新观察，并有白碗绿碗的监督式实机记录。下一步应做候选数量和重新观察策略的对照实验，测量实际抓取与完整任务成功率、耗时、候选尝试数和人工介入次数。同时需要夹持与释放确认、放置区占用检测。当前没有桌面或携带物环境模型，不应推广为未知复杂环境的通用避障。重点是把可运行演示推进为可量化的双碗连续任务。"
+  },
+  {
+    "number": 17,
+    "title": "Appendix A — Current configuration and interfaces",
+    "section": "APPENDIX  /  IMPLEMENTATION REFERENCE",
+    "images": [],
+    "sources": [
+      "src/rim_locator/config/place_config.json",
+      "src/grasp_executor/config/place_config.json",
+      "docs/README.md"
+    ],
+    "note": "这一页供导师追问实现时使用。三个包职责保持分离，新增候选分组 JSON 同时携带任务、观测、物体与候选身份。旧单点和 PoseArray 输入仍兼容，但当前完整抓放入口使用 candidate_groups。预抓与抬升 10 厘米，固定放置下降 20 厘米，等待一秒。位姿以 base 或统一后的 base_link 表示，执行工具是 grasp_center。目标有效期上限为 600 秒，但重新观察依然要求真实新帧，不把旧消息修改时间戳后重复使用。"
+  },
+  {
+    "number": 18,
+    "title": "Appendix B — Reproduction and source records",
+    "section": "APPENDIX  /  REPRODUCIBILITY",
+    "images": [],
+    "sources": [
+      "New_run/README.md",
+      "docs/README.md",
+      "docs/live_demo_verification_20260927.md"
+    ],
+    "note": "如需现场复现，先运行硬件准备脚本并保持终端，再用完整抓放的 plan-only 入口检查本次观测，随后才使用 execute 入口。这里提供 9 月 27 日的现场 ROI，移动相机或改变桌面布置后必须重新核对。离线测试入口会构建并运行隔离环境，不连接真机。所有照片保留了原始来源；报告随附逐页来源清单和中文备注，方便回答导师追问。本文引用历史已完成的测试，本次制作 PPT 没有再次运行机械臂。"
+  }
+]

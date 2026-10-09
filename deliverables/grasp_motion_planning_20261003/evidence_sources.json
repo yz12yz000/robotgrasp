@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-03",
+  "sources": {
+    "M1": {
+      "path": "src/grasp_executor/grasp_executor/moveit_ros.py",
+      "sha256": "521bf30afd2067e4481bf186eb7baf9a6f97a470806be68eaf1c83419fd9889a"
+    },
+    "M2": {
+      "path": "src/grasp_executor/grasp_executor/trajectory.py",
+      "sha256": "79f1e4e00a5d2eaefd904040d5f18d408160c2256706a7b7a7e46f502b25ca07"
+    },
+    "M3": {
+      "path": "src/grasp_executor/config/place_config.json",
+      "sha256": "583f6f9d4833e8c168ca005cb7724c546264a94f8d248fb0f55cc2f3c227a061"
+    },
+    "M4": {
+      "path": "src/grasp_executor/grasp_executor/candidates.py",
+      "sha256": "dd8a727d0aabe80c3c07bc3aa33e56b41ff05419b614016dbfea9d101b107715"
+    },
+    "D1": {
+      "path": "docs/demo_implementation_20260925.md",
+      "sha256": "d327f117585b0d411353534a6ae7b9e7dfdb18c7d46bd819298661994281cf8c"
+    },
+    "D2": {
+      "path": "docs/live_demo_verification_20260927.md",
+      "sha256": "7633b3750fa19ad69506388a55826a511d22cfd7db53e844b97ca4d1bb7f58b7"
+    },
+    "I1": {
+      "path": "debug_output/live_demo_20260927_gjgip1/initial_observation/rgb.png",
+      "sha256": "fcc2a0c40377bb18e198216f21a2bfce615016f481ada9b98b08dd7aa0d51a77"
+    },
+    "I2": {
+      "path": "debug_output/live_demo_20260927_gjgip1/lift_02.png",
+      "sha256": "9ddad7da91e5fa8a7ace3a35bbaf2ecbcfa3b5ad95a15d4816995948e34b0a7f"
+    }
+  },
+  "generated_images": false,
+  "note": "Original laboratory photographs; no new hardware experiment. Notes contain explanations only."
+}

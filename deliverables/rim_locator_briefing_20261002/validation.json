@@ -1,0 +1,36 @@
+{
+  "slides": [
+    {
+      "slide": 1,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    },
+    {
+      "slide": 2,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    },
+    {
+      "slide": 3,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    },
+    {
+      "slide": 4,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    },
+    {
+      "slide": 5,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    },
+    {
+      "slide": 6,
+      "all_slide_text_english": true,
+      "chinese_speaker_notes": true
+    }
+  ],
+  "image_policy": "original experiment images only",
+  "rendered_and_visually_reviewed": true
+}
