@@ -1,0 +1,3366 @@
+[
+  {
+    "task": "23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          598,
+          404,
+          663,
+          470
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          464,
+          712,
+          524
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.35873752976954,
+        403.62768593025436
+      ],
+      [
+        861.5391127858179,
+        421.1246134968363
+      ],
+      [
+        920.3566441055281,
+        584.1440418238129
+      ],
+      [
+        340.5339707867195,
+        551.4865418042409
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0001/result.json"
+  },
+  {
+    "task": "23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53",
+    "round": "round_0002",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          495,
+          394,
+          561,
+          459
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          652,
+          464,
+          712,
+          524
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4485717687368,
+        403.68518215249946
+      ],
+      [
+        862.3255291677896,
+        420.29014454513276
+      ],
+      [
+        924.7886629340369,
+        584.8998006360748
+      ],
+      [
+        340.37864532298363,
+        551.8858112635766
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0002/result.json"
+  },
+  {
+    "task": "23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53",
+    "round": "round_0003",
+    "error": "visual_tray_requires_observed_geometry",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          495,
+          394,
+          560,
+          459
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          652,
+          464,
+          712,
+          524
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.37084758803775,
+        403.55042251946423
+      ],
+      [
+        863.6094823408489,
+        420.1106198826542
+      ],
+      [
+        925.2613209809755,
+        585.2871158071432
+      ],
+      [
+        340.71122638918223,
+        551.8218840469673
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23e7fd57-a1ae-43e0-8348-6a1f3b2e0b53/output/round_0003/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          497
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.33555569795567,
+        403.54568470118915
+      ],
+      [
+        861.7081797189036,
+        420.51234769473297
+      ],
+      [
+        922.010428063945,
+        584.41031601514
+      ],
+      [
+        340.60862718016165,
+        551.8112868012122
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0001/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0002",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          391,
+          386,
+          450,
+          439
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.0945844282597,
+        402.67606901515006
+      ],
+      [
+        858.1364498316849,
+        420.4880709566343
+      ],
+      [
+        918.3143351992823,
+        584.4615936066141
+      ],
+      [
+        340.52319408624385,
+        552.5242318952897
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0002/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0003",
+    "error": "confirming_source_empty",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          395,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          391,
+          387,
+          450,
+          439
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.1412004628877,
+        402.8500523838417
+      ],
+      [
+        860.708800461727,
+        420.56207692653044
+      ],
+      [
+        919.7453031285393,
+        584.9013680429092
+      ],
+      [
+        340.7702852440751,
+        552.1928505769456
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0003/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0004",
+    "error": "tray_inconsistent_depth",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_inconsistent_depth",
+    "objects": [
+      {
+        "bbox": [
+          497,
+          395,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          391,
+          387,
+          450,
+          439
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0004/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0005",
+    "error": "confirming_source_empty",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          391,
+          387,
+          450,
+          439
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.0733253994826,
+        402.6597707498254
+      ],
+      [
+        858.9802691897479,
+        420.2029064755893
+      ],
+      [
+        918.75538783927,
+        584.5419852165413
+      ],
+      [
+        340.7286632860855,
+        552.5991945387659
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0005/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0005/result.json"
+  },
+  {
+    "task": "80d8f547-4abf-4dc3-a5ca-8eede997ef77",
+    "round": "round_0006",
+    "error": "completed",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          564,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          391,
+          387,
+          450,
+          439
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.00160317827476,
+        402.65051305084364
+      ],
+      [
+        859.9752343725938,
+        420.4230091330289
+      ],
+      [
+        917.5601633830421,
+        584.2500070217135
+      ],
+      [
+        340.9126348856039,
+        552.2368037910381
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0006/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/80d8f547-4abf-4dc3-a5ca-8eede997ef77/output/round_0006/result.json"
+  },
+  {
+    "task": "5c55b986-a8c9-4510-92b4-df65a9083432",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          753,
+          433,
+          826,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.45751135110305,
+        403.70302319270724
+      ],
+      [
+        863.5779537337111,
+        421.09251207204
+      ],
+      [
+        924.320405288684,
+        585.3902950179938
+      ],
+      [
+        340.4747179516279,
+        551.2856445167449
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/5c55b986-a8c9-4510-92b4-df65a9083432/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/5c55b986-a8c9-4510-92b4-df65a9083432/output/round_0001/result.json"
+  },
+  {
+    "task": "8d3c0733-9308-4113-9641-6b213f1e6a7f",
+    "round": "round_0001",
+    "error": "tray_inconsistent_depth",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_inconsistent_depth",
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          629,
+          444,
+          687,
+          502
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/8d3c0733-9308-4113-9641-6b213f1e6a7f/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/8d3c0733-9308-4113-9641-6b213f1e6a7f/output/round_0001/result.json"
+  },
+  {
+    "task": "8d3c0733-9308-4113-9641-6b213f1e6a7f",
+    "round": "round_0002",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          629,
+          444,
+          688,
+          502
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.51175144635465,
+        403.7730351609752
+      ],
+      [
+        862.0381484538409,
+        420.0980896382509
+      ],
+      [
+        924.8518582547916,
+        584.5789266213045
+      ],
+      [
+        340.26622563592696,
+        551.9790745887461
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/8d3c0733-9308-4113-9641-6b213f1e6a7f/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/8d3c0733-9308-4113-9641-6b213f1e6a7f/output/round_0002/result.json"
+  },
+  {
+    "task": "2ea35053-7c21-409a-baa1-4d4a22919ddb",
+    "round": "round_0001",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          598,
+          404,
+          663,
+          470
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          652,
+          463,
+          712,
+          525
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3627948701213,
+        403.62250217427095
+      ],
+      [
+        861.9884709640681,
+        421.3720669382457
+      ],
+      [
+        920.8886976737709,
+        584.6240228690992
+      ],
+      [
+        340.56172777481237,
+        551.406875247352
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0001/result.json"
+  },
+  {
+    "task": "2ea35053-7c21-409a-baa1-4d4a22919ddb",
+    "round": "round_0002",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          598,
+          404,
+          663,
+          470
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          463,
+          712,
+          524
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.22380476444926,
+        403.34778300233273
+      ],
+      [
+        861.9263769142766,
+        421.44785943122974
+      ],
+      [
+        919.9394115158839,
+        584.7475461797916
+      ],
+      [
+        340.6711471350305,
+        551.3870788645416
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0002/result.json"
+  },
+  {
+    "task": "2ea35053-7c21-409a-baa1-4d4a22919ddb",
+    "round": "round_0003",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          598,
+          404,
+          663,
+          469
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          463,
+          713,
+          525
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3194619302341,
+        403.47994745094564
+      ],
+      [
+        861.1526052029707,
+        421.20672431217287
+      ],
+      [
+        920.1923269479341,
+        584.3707085261037
+      ],
+      [
+        340.4587316614683,
+        551.6029847634901
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2ea35053-7c21-409a-baa1-4d4a22919ddb/output/round_0003/result.json"
+  },
+  {
+    "task": "23d3fc37-69f3-495e-b379-5f103d091479",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          753,
+          433,
+          825,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4575485525548,
+        403.7266457147798
+      ],
+      [
+        863.0154519184916,
+        421.10314249005273
+      ],
+      [
+        923.4695058631821,
+        585.2136072324847
+      ],
+      [
+        340.5069413982299,
+        551.5044997077392
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0001/result.json"
+  },
+  {
+    "task": "23d3fc37-69f3-495e-b379-5f103d091479",
+    "round": "round_0002",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          562,
+          461
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.5865930102138,
+        403.89858132002416
+      ],
+      [
+        863.4375976381035,
+        420.07090384396736
+      ],
+      [
+        927.8695063809231,
+        585.4008582718772
+      ],
+      [
+        340.25127233443123,
+        551.7827160272758
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0002/result.json"
+  },
+  {
+    "task": "23d3fc37-69f3-495e-b379-5f103d091479",
+    "round": "round_0003",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          496,
+          394,
+          562,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          477
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0003/result.json"
+  },
+  {
+    "task": "23d3fc37-69f3-495e-b379-5f103d091479",
+    "round": "round_0004",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          562,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.52872659494494,
+        403.7121112841245
+      ],
+      [
+        862.8790607716013,
+        420.11723473532226
+      ],
+      [
+        927.4100334116528,
+        585.7517132962789
+      ],
+      [
+        340.34343433412585,
+        552.0476888127372
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/23d3fc37-69f3-495e-b379-5f103d091479/output/round_0004/result.json"
+  },
+  {
+    "task": "5cd7ad19-e4b3-4f1b-9d3e-3c21b6ea97fd",
+    "round": "round_0001",
+    "error": "home_feedback_stale",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          753,
+          433,
+          826,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4038984031427,
+        403.566426907542
+      ],
+      [
+        863.3787893025524,
+        421.0407747991017
+      ],
+      [
+        924.0612298161193,
+        585.4207500352264
+      ],
+      [
+        340.45844814696727,
+        551.3490675876702
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/5cd7ad19-e4b3-4f1b-9d3e-3c21b6ea97fd/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/5cd7ad19-e4b3-4f1b-9d3e-3c21b6ea97fd/output/round_0001/result.json"
+  },
+  {
+    "task": "cb7351ed-f450-4552-add5-92ceadfc6eb0",
+    "round": "round_0001",
+    "error": "gripper_command_failed:1:gripper_state_feedback_timeout:require_GPP_raw_register_reply\n",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          754,
+          433,
+          825,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4396737672084,
+        403.6459144351912
+      ],
+      [
+        864.2722508429381,
+        420.8696983275649
+      ],
+      [
+        925.3069139395216,
+        585.6403557243058
+      ],
+      [
+        340.5571422047522,
+        551.2824735773303
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/cb7351ed-f450-4552-add5-92ceadfc6eb0/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/cb7351ed-f450-4552-add5-92ceadfc6eb0/output/round_0001/result.json"
+  },
+  {
+    "task": "8d3ba515-a337-4d23-aa3c-028b32e9829c",
+    "round": "round_0001",
+    "error": "robot_not_stationary_at_home",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": null,
+    "tray_reason": null,
+    "objects": [],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/8d3ba515-a337-4d23-aa3c-028b32e9829c/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/8d3ba515-a337-4d23-aa3c-028b32e9829c/output/round_0001/result.json"
+  },
+  {
+    "task": "7fde4776-85a2-4a83-b757-c3754a3144bd",
+    "round": "round_0001",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          562,
+          461
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.48543620703083,
+        403.70705613283513
+      ],
+      [
+        863.4641302179909,
+        420.19103632849726
+      ],
+      [
+        926.7312661043201,
+        585.4850742256884
+      ],
+      [
+        340.4359621880863,
+        551.7609926998242
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0001/result.json"
+  },
+  {
+    "task": "7fde4776-85a2-4a83-b757-c3754a3144bd",
+    "round": "round_0002",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          496,
+          394,
+          562,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          708,
+          477
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0002/result.json"
+  },
+  {
+    "task": "7fde4776-85a2-4a83-b757-c3754a3144bd",
+    "round": "round_0003",
+    "error": "home_feedback_missing",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": null,
+    "tray_reason": null,
+    "objects": [],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7fde4776-85a2-4a83-b757-c3754a3144bd/output/round_0003/result.json"
+  },
+  {
+    "task": "e40588e6-6091-4b74-93fa-3fc306973aad",
+    "round": "round_0001",
+    "error": "controller_preparation_failed",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          751,
+          435,
+          823,
+          504
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          496
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.30143884239254,
+        403.4887653009537
+      ],
+      [
+        861.9233979053668,
+        421.00991757424447
+      ],
+      [
+        920.6060623857157,
+        584.3434295711575
+      ],
+      [
+        340.6151027736607,
+        551.4817756696154
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/e40588e6-6091-4b74-93fa-3fc306973aad/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/e40588e6-6091-4b74-93fa-3fc306973aad/output/round_0001/result.json"
+  },
+  {
+    "task": "b6ef963e-640f-4000-b3af-60e0ea7654da",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          696,
+          428,
+          765,
+          497
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          596,
+          430,
+          653,
+          487
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.39656304240924,
+        403.6610351068839
+      ],
+      [
+        864.5267661132867,
+        420.6095457840245
+      ],
+      [
+        924.4772915721076,
+        585.1243441211576
+      ],
+      [
+        340.79442330199777,
+        551.206877170866
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/b6ef963e-640f-4000-b3af-60e0ea7654da/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/b6ef963e-640f-4000-b3af-60e0ea7654da/output/round_0001/result.json"
+  },
+  {
+    "task": "0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6",
+    "round": "round_0001",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          561,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.51535898519774,
+        403.75527826265466
+      ],
+      [
+        863.4877108024167,
+        419.89742853841756
+      ],
+      [
+        927.1922308639945,
+        585.3481178882786
+      ],
+      [
+        340.434746073053,
+        551.8980060927773
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0001/result.json"
+  },
+  {
+    "task": "0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6",
+    "round": "round_0002",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          561,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0002/result.json"
+  },
+  {
+    "task": "0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6",
+    "round": "round_0003",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          496,
+          395,
+          561,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/0a9d4cf0-3a6d-4fbc-bcfd-87c4c35d55c6/output/round_0003/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          742,
+          452,
+          802,
+          512
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.561863118868,
+        403.94048068703796
+      ],
+      [
+        864.6258417451762,
+        420.7357614194098
+      ],
+      [
+        926.0247978999869,
+        585.5119513431081
+      ],
+      [
+        340.6587701986124,
+        551.3446733058325
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0001/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0002",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          557,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.48521071298103,
+        403.81288268266644
+      ],
+      [
+        862.7886117627767,
+        420.34593175673473
+      ],
+      [
+        924.5019035122863,
+        584.8715336912062
+      ],
+      [
+        340.60359872650474,
+        551.8418013927533
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0002/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0003",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          557,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.55395050162565,
+        403.9092254108234
+      ],
+      [
+        862.3871919828011,
+        420.4541879632028
+      ],
+      [
+        925.2887842466698,
+        585.0142763290926
+      ],
+      [
+        340.4029868735098,
+        551.8665121913342
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0003/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0004",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          494
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.58457956475644,
+        403.3996065113441
+      ],
+      [
+        860.940622730176,
+        422.08189783941833
+      ],
+      [
+        925.7198097517012,
+        587.0654469209039
+      ],
+      [
+        339.7507412699722,
+        551.5844186169254
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0004/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0005",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          493
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0005/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0005/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0006",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          494
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.7063873836851,
+        403.560141549269
+      ],
+      [
+        861.508234322138,
+        421.8697847962039
+      ],
+      [
+        927.7210374355883,
+        587.3658135506629
+      ],
+      [
+        339.686017204634,
+        551.608451713275
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0006/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0006/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0007",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          494
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0007/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0007/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0008",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          492
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          498,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.7249928058659,
+        403.48671283257005
+      ],
+      [
+        860.8027433306542,
+        422.0655897465698
+      ],
+      [
+        927.8626815942544,
+        587.7272757034038
+      ],
+      [
+        339.51182037617116,
+        551.7923659640554
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0008/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0008/result.json"
+  },
+  {
+    "task": "897fe062-f98e-4018-96f9-413517367436",
+    "round": "round_0009",
+    "error": "source_outside_detection_view",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "source_outside_detection_view",
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          493
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          557,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0009/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/897fe062-f98e-4018-96f9-413517367436/output/round_0009/result.json"
+  },
+  {
+    "task": "76fadfbd-f509-4b6d-8c04-69edc7e8042b",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          752,
+          434,
+          823,
+          504
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          496
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.2733597669426,
+        403.46784429070806
+      ],
+      [
+        861.6718290669851,
+        421.4167467252262
+      ],
+      [
+        919.7622531019085,
+        584.373020439506
+      ],
+      [
+        340.59634892631846,
+        551.290394145848
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/76fadfbd-f509-4b6d-8c04-69edc7e8042b/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/76fadfbd-f509-4b6d-8c04-69edc7e8042b/output/round_0001/result.json"
+  },
+  {
+    "task": "6cfe8769-efbd-4d28-afbf-6ce0cc2fd3bd",
+    "round": "round_0001",
+    "error": "Object of type int64 is not JSON serializable",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": null,
+    "tray_reason": null,
+    "objects": [],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/6cfe8769-efbd-4d28-afbf-6ce0cc2fd3bd/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/6cfe8769-efbd-4d28-afbf-6ce0cc2fd3bd/output/round_0001/result.json"
+  },
+  {
+    "task": "4f54516f-3fba-4151-b43d-8d92fd3ed597",
+    "round": "round_0001",
+    "error": "all_candidates_rejected",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          728,
+          409,
+          796,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          630,
+          427,
+          686,
+          483
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.401329603281,
+        403.6523994013972
+      ],
+      [
+        861.2295545595583,
+        421.4428306467945
+      ],
+      [
+        920.8148329959732,
+        584.4091672665219
+      ],
+      [
+        340.28129441504257,
+        551.4130683478368
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0001/result.json"
+  },
+  {
+    "task": "4f54516f-3fba-4151-b43d-8d92fd3ed597",
+    "round": "round_0002",
+    "error": "all_candidates_rejected",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          728,
+          409,
+          797,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          630,
+          427,
+          686,
+          483
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.436177688511,
+        403.70376962759224
+      ],
+      [
+        861.9886866765939,
+        421.15005948834954
+      ],
+      [
+        921.9273743808351,
+        584.6810313429279
+      ],
+      [
+        340.47018445709114,
+        551.5413104343954
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0002/result.json"
+  },
+  {
+    "task": "4f54516f-3fba-4151-b43d-8d92fd3ed597",
+    "round": "round_0003",
+    "error": "interrupted",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          728,
+          409,
+          797,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          630,
+          427,
+          686,
+          483
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.40322067189163,
+        403.6640714368447
+      ],
+      [
+        862.0684143992136,
+        421.035475434871
+      ],
+      [
+        921.6821126624878,
+        584.5073821370066
+      ],
+      [
+        340.5082833477427,
+        551.5090225452612
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/4f54516f-3fba-4151-b43d-8d92fd3ed597/output/round_0003/result.json"
+  },
+  {
+    "task": "d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          629,
+          444,
+          687,
+          502
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.54254025024164,
+        403.82550879294587
+      ],
+      [
+        861.4464239432115,
+        420.37815890596806
+      ],
+      [
+        924.5057299710653,
+        584.5974826259959
+      ],
+      [
+        340.12365076015215,
+        551.9833342566195
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0001/result.json"
+  },
+  {
+    "task": "d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f",
+    "round": "round_0002",
+    "error": "tray_inconsistent_depth",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_inconsistent_depth",
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          476
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          392,
+          384,
+          450,
+          436
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0002/result.json"
+  },
+  {
+    "task": "d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f",
+    "round": "round_0003",
+    "error": "tray_inconsistent_depth",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_inconsistent_depth",
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          475
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          392,
+          384,
+          450,
+          436
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0003/result.json"
+  },
+  {
+    "task": "d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f",
+    "round": "round_0004",
+    "error": "tray_inconsistent_depth",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_inconsistent_depth",
+    "objects": [
+      {
+        "bbox": [
+          499,
+          407,
+          566,
+          475
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          392,
+          384,
+          450,
+          437
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/d64cc54f-6fe6-4fe4-9dd2-16397fe9cb1f/output/round_0004/result.json"
+  },
+  {
+    "task": "b591d53b-2859-48e0-bc0f-e00ff280ecbb",
+    "round": "round_0001",
+    "error": "home_feedback_stale",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          752,
+          434,
+          823,
+          504
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          694,
+          495
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.2508678644777,
+        403.3738017014683
+      ],
+      [
+        861.7863552231653,
+        421.4290188818314
+      ],
+      [
+        920.167043656731,
+        584.8635764297887
+      ],
+      [
+        340.6739288290059,
+        551.5115904930312
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/b591d53b-2859-48e0-bc0f-e00ff280ecbb/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/b591d53b-2859-48e0-bc0f-e00ff280ecbb/output/round_0001/result.json"
+  },
+  {
+    "task": "7579946d-f28a-49f2-9bd7-eae8689ff1f9",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          751,
+          434,
+          824,
+          504
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          498
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3253137281926,
+        403.4755305311675
+      ],
+      [
+        862.1355095008881,
+        421.5100757277141
+      ],
+      [
+        921.6179164908044,
+        585.1023643626158
+      ],
+      [
+        340.45604501726683,
+        551.3411488291507
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0001/result.json"
+  },
+  {
+    "task": "7579946d-f28a-49f2-9bd7-eae8689ff1f9",
+    "round": "round_0002",
+    "error": "tray_outline_incomplete",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_outline_incomplete",
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          694,
+          495
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0002/result.json"
+  },
+  {
+    "task": "7579946d-f28a-49f2-9bd7-eae8689ff1f9",
+    "round": "round_0003",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          694,
+          495
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4226935171331,
+        403.5874117040734
+      ],
+      [
+        861.5650246405894,
+        420.65616982879766
+      ],
+      [
+        924.326608187791,
+        585.0949830792971
+      ],
+      [
+        340.22049959846504,
+        551.8385116833222
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0003/result.json"
+  },
+  {
+    "task": "7579946d-f28a-49f2-9bd7-eae8689ff1f9",
+    "round": "round_0004",
+    "error": "tray_outline_incomplete",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "invalid",
+    "tray_reason": "tray_outline_incomplete",
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          495
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": null,
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0004/result.json"
+  },
+  {
+    "task": "7579946d-f28a-49f2-9bd7-eae8689ff1f9",
+    "round": "round_0005",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          395,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          495
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.40264634668523,
+        403.58188024743606
+      ],
+      [
+        863.0636295167851,
+        420.62434647521366
+      ],
+      [
+        925.4486942272047,
+        585.5586624815373
+      ],
+      [
+        340.4253082757643,
+        551.6554320173739
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0005/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/7579946d-f28a-49f2-9bd7-eae8689ff1f9/output/round_0005/result.json"
+  },
+  {
+    "task": "b29239fa-0549-4643-be4d-9895720f1fb1",
+    "round": "round_0001",
+    "error": "agent_decision_timeout",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          696,
+          428,
+          765,
+          497
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          596,
+          430,
+          652,
+          487
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3829925295957,
+        403.66895530172883
+      ],
+      [
+        863.5337687837934,
+        420.9935235834379
+      ],
+      [
+        922.8335694674255,
+        584.8797941969062
+      ],
+      [
+        340.71912287574645,
+        551.2206287315768
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/b29239fa-0549-4643-be4d-9895720f1fb1/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/b29239fa-0549-4643-be4d-9895720f1fb1/output/round_0001/result.json"
+  },
+  {
+    "task": "33d1aa3f-3355-4b8f-b742-328ba0142699",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          598,
+          404,
+          663,
+          470
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          463,
+          713,
+          524
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.28044774737896,
+        403.4232841529358
+      ],
+      [
+        860.9286268180067,
+        421.51802570174584
+      ],
+      [
+        919.443759427401,
+        584.5019926104578
+      ],
+      [
+        340.4922108319215,
+        551.5485007798267
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/33d1aa3f-3355-4b8f-b742-328ba0142699/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/33d1aa3f-3355-4b8f-b742-328ba0142699/output/round_0001/result.json"
+  },
+  {
+    "task": "01dca33c-9df0-4547-a7e0-7d86e3bfbd82",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          741,
+          452,
+          802,
+          512
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.47045000930706,
+        403.81360334650293
+      ],
+      [
+        863.8175128069132,
+        420.9682084160008
+      ],
+      [
+        923.9596054546386,
+        585.1251472300003
+      ],
+      [
+        340.66466020065593,
+        551.3017454375109
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/01dca33c-9df0-4547-a7e0-7d86e3bfbd82/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/01dca33c-9df0-4547-a7e0-7d86e3bfbd82/output/round_0001/result.json"
+  },
+  {
+    "task": "2b1fe428-1653-43cf-b461-f5bc3d3a8be1",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          696,
+          428,
+          765,
+          497
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          596,
+          430,
+          653,
+          487
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3591620327111,
+        403.58552451986094
+      ],
+      [
+        863.8401218060802,
+        421.0504855680146
+      ],
+      [
+        923.3904863881858,
+        585.1975524032879
+      ],
+      [
+        340.68982409258956,
+        551.1592995115357
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0001/result.json"
+  },
+  {
+    "task": "2b1fe428-1653-43cf-b461-f5bc3d3a8be1",
+    "round": "round_0002",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          493,
+          397,
+          559,
+          462
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          596,
+          430,
+          652,
+          487
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.44814016108387,
+        403.75348930690507
+      ],
+      [
+        865.6150557498154,
+        419.9764480950506
+      ],
+      [
+        927.7752961815909,
+        585.7446900323533
+      ],
+      [
+        340.85248179813806,
+        551.4923978366544
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0002/result.json"
+  },
+  {
+    "task": "2b1fe428-1653-43cf-b461-f5bc3d3a8be1",
+    "round": "round_0003",
+    "error": "confirming_placement",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          492,
+          397,
+          559,
+          462
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          372,
+          420,
+          433,
+          477
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.43132497358874,
+        403.3035074167341
+      ],
+      [
+        860.0205005000832,
+        421.74683659628016
+      ],
+      [
+        922.985949204177,
+        585.9496186351805
+      ],
+      [
+        339.96486205744617,
+        551.6882356029462
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0003/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0003/result.json"
+  },
+  {
+    "task": "2b1fe428-1653-43cf-b461-f5bc3d3a8be1",
+    "round": "round_0004",
+    "error": "confirming_source_empty",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          492,
+          397,
+          559,
+          463
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          371,
+          420,
+          433,
+          477
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.20703637809305,
+        403.09979066239373
+      ],
+      [
+        857.6487843141128,
+        422.1034343057342
+      ],
+      [
+        917.2931749851118,
+        584.4543397493491
+      ],
+      [
+        340.0623499434702,
+        551.6858936975749
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0004/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0004/result.json"
+  },
+  {
+    "task": "2b1fe428-1653-43cf-b461-f5bc3d3a8be1",
+    "round": "round_0005",
+    "error": "completed",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          492,
+          397,
+          559,
+          462
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          371,
+          420,
+          433,
+          477
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.2573586144492,
+        403.0779595737173
+      ],
+      [
+        859.3770730360385,
+        421.8842555435384
+      ],
+      [
+        920.3610176545056,
+        585.2594102916519
+      ],
+      [
+        340.01099608474357,
+        551.4874179850902
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0005/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/2b1fe428-1653-43cf-b461-f5bc3d3a8be1/output/round_0005/result.json"
+  },
+  {
+    "task": "9fd45b64-b9f8-4a80-bde5-5cec342c86ae",
+    "round": "round_0001",
+    "error": "confirming_source_empty",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          495
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.6794757055796,
+        403.4831314180684
+      ],
+      [
+        860.7278684480634,
+        422.1282213882611
+      ],
+      [
+        926.9445371770571,
+        587.3415875108514
+      ],
+      [
+        339.50699149792587,
+        551.6295536576088
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/9fd45b64-b9f8-4a80-bde5-5cec342c86ae/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/9fd45b64-b9f8-4a80-bde5-5cec342c86ae/output/round_0001/result.json"
+  },
+  {
+    "task": "9fd45b64-b9f8-4a80-bde5-5cec342c86ae",
+    "round": "round_0002",
+    "error": "no_targets",
+    "roi": [
+      330,
+      375,
+      950,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          379,
+          422,
+          455,
+          494
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          499,
+          395,
+          556,
+          448
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.7529367072352,
+        403.580383400858
+      ],
+      [
+        862.3034037966806,
+        421.8561516438608
+      ],
+      [
+        929.4978805986331,
+        588.0307269919596
+      ],
+      [
+        339.69999158837595,
+        551.6188565754684
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/9fd45b64-b9f8-4a80-bde5-5cec342c86ae/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/9fd45b64-b9f8-4a80-bde5-5cec342c86ae/output/round_0002/result.json"
+  },
+  {
+    "task": "cb8576a6-e0c5-47f4-85e4-bc74436c6760",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          741,
+          452,
+          802,
+          512
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4475592085023,
+        403.7372503417975
+      ],
+      [
+        865.2980799202546,
+        420.697569300018
+      ],
+      [
+        925.6741218069192,
+        585.825245143586
+      ],
+      [
+        340.92989346110437,
+        551.3546073589285
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/cb8576a6-e0c5-47f4-85e4-bc74436c6760/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/cb8576a6-e0c5-47f4-85e4-bc74436c6760/output/round_0001/result.json"
+  },
+  {
+    "task": "dcc912c4-41a4-4498-81d2-1adb49f192a9",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          497,
+          394,
+          563,
+          460
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          496
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.4725233242909,
+        403.72966747727395
+      ],
+      [
+        860.7877334811722,
+        420.5718979850196
+      ],
+      [
+        924.4380818160237,
+        585.0843639334169
+      ],
+      [
+        340.3150755533301,
+        552.0709327802364
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/dcc912c4-41a4-4498-81d2-1adb49f192a9/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/dcc912c4-41a4-4498-81d2-1adb49f192a9/output/round_0001/result.json"
+  },
+  {
+    "task": "9770ba73-f790-4996-a496-7e665ed478f1",
+    "round": "round_0001",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          751,
+          434,
+          824,
+          504
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          635,
+          438,
+          693,
+          496
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.3187357162273,
+        403.56157110207783
+      ],
+      [
+        861.5785865395827,
+        421.33283063534293
+      ],
+      [
+        919.8611981297661,
+        584.2999060217542
+      ],
+      [
+        340.6036976594989,
+        551.4218371642368
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/9770ba73-f790-4996-a496-7e665ed478f1/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/9770ba73-f790-4996-a496-7e665ed478f1/output/round_0001/result.json"
+  },
+  {
+    "task": "b6723c22-6c14-4f10-b252-ad94ad0ca627",
+    "round": "round_0001",
+    "error": "gripper_command_failed:1:gripper_command_not_applied\n",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          609,
+          433,
+          677,
+          503
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          742,
+          452,
+          802,
+          512
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.5205233862678,
+        403.8396756926892
+      ],
+      [
+        865.026238459538,
+        420.51369825017
+      ],
+      [
+        926.4197129986194,
+        585.7118389434852
+      ],
+      [
+        340.77412918011504,
+        551.4710183136316
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/b6723c22-6c14-4f10-b252-ad94ad0ca627/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/b6723c22-6c14-4f10-b252-ad94ad0ca627/output/round_0001/result.json"
+  },
+  {
+    "task": "0bfe9fd1-b403-456b-9c06-1b2d49e9902b",
+    "round": "round_0001",
+    "error": "object_position_uncertain",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          753,
+          433,
+          826,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          651,
+          422,
+          708,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.55453688509465,
+        403.81258025745683
+      ],
+      [
+        864.2085319404985,
+        420.87002789839926
+      ],
+      [
+        926.3331659544912,
+        585.9087152498932
+      ],
+      [
+        340.45558394169126,
+        551.4927187536509
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/0bfe9fd1-b403-456b-9c06-1b2d49e9902b/output/round_0001/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/0bfe9fd1-b403-456b-9c06-1b2d49e9902b/output/round_0001/result.json"
+  },
+  {
+    "task": "0bfe9fd1-b403-456b-9c06-1b2d49e9902b",
+    "round": "round_0002",
+    "error": "",
+    "roi": [
+      330,
+      375,
+      930,
+      595
+    ],
+    "tray_status": "ok",
+    "tray_reason": null,
+    "objects": [
+      {
+        "bbox": [
+          753,
+          433,
+          825,
+          502
+        ],
+        "id": 0
+      },
+      {
+        "bbox": [
+          650,
+          422,
+          707,
+          478
+        ],
+        "id": 1
+      }
+    ],
+    "source_polygon_px": [
+      [
+        411.53787063886114,
+        403.77733689664603
+      ],
+      [
+        865.3091593513966,
+        420.8035663147272
+      ],
+      [
+        927.5415062324894,
+        586.4424523640326
+      ],
+      [
+        340.639171775635,
+        551.4273005921717
+      ]
+    ],
+    "image": "/home/rob/table_clean_ws/.agent_tasks/0bfe9fd1-b403-456b-9c06-1b2d49e9902b/output/round_0002/camera_rgb.jpg",
+    "result": "/home/rob/table_clean_ws/.agent_tasks/0bfe9fd1-b403-456b-9c06-1b2d49e9902b/output/round_0002/result.json"
+  }
+]

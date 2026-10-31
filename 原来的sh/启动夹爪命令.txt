@@ -1,0 +1,3 @@
+source /opt/ros/humble/setup.bash
+source /home/rob/handControl2_ws/install/setup.bash
+python3 src/grasp_executor/grasp_executor/gripper_command.py Open --timeout 18 --settle-time 3
